@@ -96,7 +96,7 @@ Urutan peringkat:
 4. **Head-to-head** — hasil antar pemain yang sama-sama tied saat berada di tim berlawanan
 5. Masih sama → rank bersama
 
-Pemain yang _withdrawn_ tetap tampil dengan label **Withdrawn**.
+Pemain yang _withdrawn_ tetap tampil dengan label **Withdrawn**; pemain pengganti dengan label **Sub**. Rank bersama ditampilkan `3=`.
 Hasil _Approved_ bersifat final; hasil yang belum di-approve ditampilkan sebagai **provisional** (visual berbeda).
 
 ### 4.8 Realtime

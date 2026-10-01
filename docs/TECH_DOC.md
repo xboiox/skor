@@ -50,7 +50,7 @@ Browser Playwright perlu dipasang sekali: `npx playwright install chromium webki
 | `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `skor`                                          | Kredensial container Postgres                                  |
 | `APP_URL`                                             | `http://localhost:3000`                         | Base URL app (untuk link turnamen)                             |
 | `GUEST_TTL_DAYS`                                      | `7`                                             | Masa berlaku turnamen guest (1–90)                             |
-| `AUTH_SECRET`                                         | hasil `openssl rand -base64 32`                 | Secret Auth.js (wajib mulai Fase 5)                            |
+| `AUTH_SECRET`                                         | hasil `openssl rand -base64 32`                 | Secret Better Auth (wajib, min. 32 karakter)                   |
 | `AUTH_GOOGLE_ID`                                      | …                                               | OAuth Client ID                                                |
 | `AUTH_GOOGLE_SECRET`                                  | …                                               | OAuth Client Secret                                            |
 
@@ -97,10 +97,10 @@ type ApiResponse<T> =
 
 ### Auth
 
-| Method | Path            | Akses  | Keterangan                               |
-| ------ | --------------- | ------ | ---------------------------------------- |
-| *      | `/api/auth/*`   | publik | Auth.js (login, callback Google, logout) |
-| POST   | `/api/register` | publik | `{ name, email, password }`              |
+| Method | Path                      | Akses         | Keterangan                                                                                          |
+| ------ | ------------------------- | ------------- | --------------------------------------------------------------------------------------------------- |
+| *      | `/api/auth/*`             | publik        | Better Auth: `sign-up/email`, `sign-in/email`, `sign-in/social` (Google), `sign-out`, `get-session` |
+| GET    | `/t/:slug/enter/:role?k=` | pemegang link | Tukar token admin/player → cookie httpOnly → redirect `/t/:slug/admin` atau `/t/:slug/play`         |
 
 ### Tournament
 
@@ -166,18 +166,18 @@ Tennis:
 
 ## 6. UI routes
 
-| Route                       | Akses        | Isi                                                                                                                                    |
-| --------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                         | publik       | Landing + CTA "Create tournament"                                                                                                      |
-| `/login`, `/register`       | publik       | Email/password + "Continue with Google"                                                                                                |
-| `/dashboard`                | user         | Daftar turnamen milik user                                                                                                             |
-| `/tournaments/new`          | publik       | Form create (field dinamis sesuai scoring type)                                                                                        |
-| `/tournaments/new/created`  | pembuat      | Menampilkan admin/player/public link (guest: peringatan simpan admin link)                                                             |
-| `/t/[slug]`                 | viewer       | Leaderboard, ronde & skor live                                                                                                         |
-| `/t/[slug]/play`            | player       | Dropdown "I am …", daftar match, tombol input skor                                                                                     |
-| `/t/[slug]/match/[matchId]` | player, host | Layar scoring: tombol besar +1 Team A / Team B, Undo, mode Final result                                                                |
-| `/t/[slug]/admin`           | host         | Antrian approval, kontrol Next round / Repeat / End, edit skor, tombol **Replace player**                                              |
-| `/t/[slug]/admin/replace`   | host         | Wizard: pilih pemain → Temporary/Permanent → ronde → New player / Bye player (bye hanya muncul untuk Temporary) → preview → konfirmasi |
+| Route                             | Akses        | Isi                                                                                                                                    |
+| --------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                               | publik       | Landing + CTA "Create tournament"                                                                                                      |
+| `/login?next=`, `/register?next=` | publik       | Email/password + "Continue with Google"                                                                                                |
+| `/dashboard`                      | user         | Daftar turnamen milik user                                                                                                             |
+| `/tournaments/new`                | publik       | Form create (field dinamis sesuai scoring type)                                                                                        |
+| `/tournaments/new/created`        | pembuat      | Menampilkan admin/player/public link (guest: peringatan simpan admin link)                                                             |
+| `/t/[slug]`                       | viewer       | Leaderboard, ronde & skor live                                                                                                         |
+| `/t/[slug]/play`                  | player       | Dropdown "I am …", daftar match, tombol input skor                                                                                     |
+| `/t/[slug]/match/[matchId]`       | player, host | Layar scoring: tombol besar +1 Team A / Team B, Undo, mode Final result                                                                |
+| `/t/[slug]/admin`                 | host         | Antrian approval, kontrol Next round / Repeat / End, edit skor, tombol **Replace player**                                              |
+| `/t/[slug]/admin/replace`         | host         | Wizard: pilih pemain → Temporary/Permanent → ronde → New player / Bye player (bye hanya muncul untuk Temporary) → preview → konfirmasi |
 
 Prinsip UI: mobile-first — lihat [UI_GUIDELINES.md](UI_GUIDELINES.md) untuk spesifikasi, wireframe, dan budget performa.
 

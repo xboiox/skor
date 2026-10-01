@@ -40,18 +40,22 @@
 
 ## Fase 4 — Leaderboard engine (TDD)
 
-- [ ] Agregasi stat per pemain (played, points won, points lost, diff)
-- [ ] Sorting tie-breaker berlapis + head-to-head + rank bersama
-- [ ] Mode final vs provisional
-- [ ] Avg points won per match saat jumlah played berbeda + label withdrawn
+- [x] Agregasi stat per pemain (played, points won, points lost, diff, avg)
+- [x] Sorting tie-breaker berlapis + head-to-head + rank bersama (competition ranking)
+- [x] Mode final vs provisional
+- [x] Avg points won per match saat jumlah played berbeda + label withdrawn / substitute
+- [x] Test invariant lintas engine (jadwal Americano asli + skor acak)
+- [x] Coverage domain/leaderboard 100%
 
 ## Fase 5 — Auth & akses
 
-- [ ] Auth.js: Credentials (argon2id) + Google provider
-- [ ] Halaman `/login`, `/register`
-- [ ] Token admin/player: generate, hash, tukar ke cookie httpOnly, redirect URL bersih
-- [ ] Guard `requireHost`, `requirePlayer`, `requireViewer`
-- [ ] Rate limit login/register
+- [x] Better Auth: email/password (scrypt) + Google (aktif bila kredensial diisi), session di DB
+- [x] Migrasi tabel auth ke skema Better Auth (0001 hapus struktur lama, 0002 tabel baru)
+- [x] Halaman `/login`, `/register` (+ `?next=` aman dari open redirect), `/dashboard` sementara, sign out
+- [x] Token admin/player: generate, hash, tukar ke cookie httpOnly, redirect URL bersih (`/t/:slug/enter/:role`)
+- [x] Guard `requireHost`, `requireScorer`, `requireViewer`
+- [x] Rate limit login/register (bawaan Better Auth: 3 / 10 detik per IP), aktif di semua environment
+- [x] E2E alur register → dashboard → sign out → login, password salah, `?next=` luar, link tidak valid (iPhone 13, Pixel 7, desktop)
 
 ## Fase 6 — Tournament management
 
@@ -89,6 +93,7 @@
 
 - [x] Container `cleanup` (hapus guest expired tiap jam) + test — selesai di Fase 1
 - [ ] Rate limit aksi skor
+- [ ] Rate limit di balik reverse proxy: set `advanced.ipAddress.trustedProxies` (header `x-forwarded-for` bisa dipalsukan bila app diakses langsung)
 - [ ] Security review (token, cookie, input, error leak)
 - [ ] E2E suite ([TECH_DOC §7](TECH_DOC.md)) hijau
 - [ ] Coverage total ≥ 80%

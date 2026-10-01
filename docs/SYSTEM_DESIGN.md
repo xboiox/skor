@@ -5,29 +5,26 @@
 ## 1. Data model
 
 ```
-users ─┬─< accounts            (Auth.js: provider Google)
+users ─┬─< accounts            (Better Auth: "credential" = email/password, "google")
+       ├─< sessions            (Better Auth, session di database)
        └─< tournaments ──┬─< players
           (owner_id null   ├─< rounds ──┬─< matches ──< score_events
            = guest)        │            └─< round_byes
                            ├─< substitutions
                            └─< access_tokens
+verifications                 (Better Auth, token sementara)
 ```
 
 ### 1.1 Tabel
 
-**users**
+**Tabel auth** mengikuti skema inti Better Auth (nama tabel jamak, kolom snake_case, id uuid):
 
-| Kolom          | Tipe             | Catatan                      |
-| -------------- | ---------------- | ---------------------------- |
-| id             | uuid PK          |                              |
-| name           | text             |                              |
-| email          | text unique      |                              |
-| email_verified | timestamptz null |                              |
-| password_hash  | text null        | null jika hanya login Google |
-| image          | text null        |                              |
-| created_at     | timestamptz      |                              |
-
-**accounts** — tabel standar adapter Auth.js (provider, provider_account_id, token OAuth).
+| Tabel         | Kolom penting                                                                                                                                       |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| users         | id, name, email (unique), email_verified (bool), image, created_at, updated_at                                                                      |
+| accounts      | user_id, provider_id (`credential` / `google`), account_id, password (hash scrypt, hanya credential), token OAuth; unique (provider_id, account_id) |
+| sessions      | user_id, token (unique), expires_at (30 hari), ip_address, user_agent                                                                               |
+| verifications | identifier, value, expires_at                                                                                                                       |
 
 **tournaments**
 
@@ -306,40 +303,53 @@ Service menyimpan hasilnya dalam satu transaksi (update slot match, byes, status
 
 ## 5. Leaderboard engine (`src/domain/leaderboard`)
 
-Input: daftar pemain + match (dengan skor & status). Output: baris terurut.
+```ts
+computeLeaderboard({ players, matches, mode: "final" | "provisional" }): { rows: LeaderboardRow[]; usesAverage: boolean }
+```
+
+Input: pemain `{ id, name, status, joinedRound }` + match `{ id, status, teamA, teamB, scoreA, scoreB }`. Output: baris terurut.
 
 Per pemain, dari setiap match yang dia mainkan (skor timnya = `for`, skor lawan = `against`):
 
-| Stat        | Definisi                               |
-| ----------- | -------------------------------------- |
-| played      | jumlah match                           |
-| pointsWon   | Σ `for` (rally: poin; tennis: game)    |
-| pointsLost  | Σ `against`                            |
-| diff        | pointsWon − pointsLost                 |
-| avgWon      | pointsWon ÷ played (0 jika played = 0) |
-| isWithdrawn | dari status pemain (tetap ditampilkan) |
+| Stat          | Definisi                                                              |
+| ------------- | --------------------------------------------------------------------- |
+| played        | jumlah match                                                          |
+| pointsWon     | Σ `for` (rally: poin; tennis: game)                                   |
+| pointsLost    | Σ `against`                                                           |
+| diff          | pointsWon − pointsLost                                                |
+| avgWon        | pointsWon ÷ played (0 jika played = 0)                                |
+| label         | `substitute` (punya `joinedRound`), `withdrawn`, atau `null`          |
+| isProvisional | ada kontribusi dari match yang belum di-approve                       |
+| rank          | competition ranking (1, 2, 2, 4) + `isSharedRank` untuk tampilan `2=` |
 
-Tidak ada konsep menang/kalah/seri: skor 2-2 → +2 won, +2 lost.
+Tidak ada konsep menang/kalah/seri: skor 2-2 → +2 won, +2 lost. Pemain yang belum main tetap tampil dengan nilai 0.
 
 Kriteria pertama:
 
 - Semua pemain yang pernah main punya `played` sama → `pointsWon`.
-- Ada perbedaan `played` (bye, pengganti) → `avgWon`.
+- Ada perbedaan `played` (bye, pengganti) → `avgWon` (`usesAverage = true`; dibandingkan dengan perkalian silang, bukan pembagian desimal).
 
-Urutan: `pointsWon ↓ / avgWon ↓` → `diff ↓` → `pointsLost ↑` → **head-to-head** → rank bersama.
+Urutan: `pointsWon ↓ / avgWon ↓` → `diff ↓` → `pointsLost ↑` → **head-to-head** → rank bersama (urut nama untuk tampilan).
+
+Catatan perilaku:
+
+- Jika `pointsWon` dan `diff` sama, `pointsLost` pasti sama (diff = won − lost). Kriteria `pointsLost` hanya berpengaruh di mode rata-rata.
+- Dengan tepat 4 pemain, head-to-head tidak pernah memecah seri (dua pemain selalu partner atau lawan). Berguna mulai 5 pemain.
 
 Statistik dihitung dari **slot aktual** di match (setelah penggantian), sehingga poin otomatis masuk ke pemain pengganti.
 
 **Head-to-head** (untuk grup yang sama persis di semua kriteria sebelumnya):
 
-- Hanya match di mana pemain yang tied berada di **tim berlawanan**.
+- Hanya match di mana pemain yang tied berada di **tim berlawanan** (match sebagai partner diabaikan).
 - Bandingkan jumlah match yang dimenangkan (skor tim lebih tinggi) di antara mereka, lalu diff di match tersebut.
 - Jika masih sama / tidak pernah berhadapan → **rank bersama** (ditampilkan sama, mis. `3=`).
 
 Mode:
 
 - `final`: hanya match `approved`.
-- `provisional`: termasuk `in_progress` dan `submitted`; baris ditandai `isProvisional` jika ada kontribusi dari match non-approved.
+- `provisional`: termasuk `in_progress` dan `submitted`; baris ditandai `isProvisional` jika ada kontribusi dari match non-approved. Match `scheduled` tidak pernah dihitung.
+
+Mexicano: service memakai urutan `rows` (mode `final`, hanya pemain `active`) sebagai `ranking` untuk `generateMexicanoRound`.
 
 ## 6. Realtime
 
@@ -383,12 +393,26 @@ WHERE id = $1 AND version = $expectedVersion
 | Player | Cookie player token valid + `playerId` pilihan "I am …" (cookie terpisah) |
 | Viewer | Siapa pun dengan `slug`                                                   |
 
-Alur link:
+Alur link (`src/app/t/[slug]/enter/[role]/route.ts` → `exchangeAccessLink`):
 
 ```
-/t/{slug}/admin?k={adminToken}
-  → server verifikasi hash → set cookie httpOnly `skor_admin_{slug}` → redirect /t/{slug}/admin
+/t/{slug}/enter/admin?k={adminToken}     (player: /t/{slug}/enter/player?k=…)
+  → validasi bentuk input → cocokkan SHA-256 token + slug + role + belum expired
+  → set cookie httpOnly `skor_admin_{slug}` / `skor_player_{slug}` (SameSite=Lax, Secure bila APP_URL https,
+    umur = sisa umur turnamen guest, atau 180 hari untuk turnamen milik akun)
+  → 303 redirect ke /t/{slug}/admin atau /t/{slug}/play (Referrer-Policy: no-referrer)
+  → link tidak valid / expired → halaman 404 "This link is not valid"
 ```
+
+Guard (`src/server/access/guards.ts`), menerima `{ db, cookies, userId }` agar bisa diuji tanpa Next:
+
+| Guard           | Lolos bila                                                                                       | Gagal                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------- |
+| `requireHost`   | session = owner, atau cookie admin valid                                                         | 401 bila anonim, 403 bila user lain / pemegang link player |
+| `requireScorer` | host, atau cookie player valid + cookie `skor_me_{slug}` = UUID pemain **aktif** di turnamen ini | 401 anonim, 403 "Choose who you are first."                |
+| `requireViewer` | slug ada dan belum expired                                                                       | 404                                                        |
+
+Cookie identitas divalidasi sebagai UUID sebelum dipakai di query (cookie bisa dimanipulasi).
 
 Token admin hanya ditampilkan **sekali** saat turnamen guest dibuat (dengan tombol copy & peringatan untuk menyimpannya).
 

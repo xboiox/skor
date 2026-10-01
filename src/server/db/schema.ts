@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   bigserial,
+  boolean,
   check,
   date,
   index,
@@ -55,37 +56,71 @@ const updatedAt = () =>
     .defaultNow()
     .$onUpdate(() => new Date());
 
-// ---------- Auth ----------
+// ---------- Auth (Better Auth core schema, plural table names) ----------
 
 export const users = pgTable("users", {
   id: uuid().primaryKey().defaultRandom(),
-  name: text(),
+  name: text().notNull(),
   email: text().notNull().unique(),
-  emailVerified: timestamp({ withTimezone: true, mode: "date" }),
-  passwordHash: text(), // null when the user only signs in with Google
+  emailVerified: boolean().notNull().default(false),
   image: text(),
   createdAt: createdAt(),
+  updatedAt: updatedAt(),
 });
 
-// Shape required by the Auth.js Drizzle adapter (OAuth token field names are fixed by Auth.js).
-export const accounts = pgTable(
-  "accounts",
+export const sessions = pgTable(
+  "sessions",
   {
+    id: uuid().primaryKey().defaultRandom(),
     userId: uuid()
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    type: text().notNull(),
-    provider: text().notNull(),
-    providerAccountId: text().notNull(),
-    refresh_token: text(),
-    access_token: text(),
-    expires_at: integer(),
-    token_type: text(),
-    scope: text(),
-    id_token: text(),
-    session_state: text(),
+    token: text().notNull().unique(),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    ipAddress: text(),
+    userAgent: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
   },
-  (t) => [primaryKey({ columns: [t.provider, t.providerAccountId] })],
+  (t) => [index("sessions_user_idx").on(t.userId)],
+);
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid()
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    providerId: text().notNull(), // "credential" for email/password, "google" for Google
+    accountId: text().notNull(),
+    password: text(), // scrypt hash, credential accounts only
+    accessToken: text(),
+    refreshToken: text(),
+    idToken: text(),
+    accessTokenExpiresAt: timestamp({ withTimezone: true }),
+    refreshTokenExpiresAt: timestamp({ withTimezone: true }),
+    scope: text(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index("accounts_user_idx").on(t.userId),
+    uniqueIndex("accounts_provider_account_unique").on(t.providerId, t.accountId),
+  ],
+);
+
+export const verifications = pgTable(
+  "verifications",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    identifier: text().notNull(),
+    value: text().notNull(),
+    expiresAt: timestamp({ withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index("verifications_identifier_idx").on(t.identifier)],
 );
 
 // ---------- Tournament ----------

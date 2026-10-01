@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { AppHeader } from "@/components/app-header";
 
 const FEATURES = [
   { title: "Auto schedule", body: "Fair partner rotation across every court, byes included." },
@@ -9,19 +10,16 @@ const FEATURES = [
 export default function Home() {
   return (
     <div className="flex flex-1 flex-col">
-      <header className="pt-safe border-border bg-surface border-b">
-        <div className="mx-auto flex h-14 max-w-2xl items-center justify-between px-4">
-          <span className="text-xl font-extrabold tracking-tight">
-            Skor<span className="text-primary">.</span>
-          </span>
+      <AppHeader
+        right={
           <Link
             href="/login"
             className="text-primary flex min-h-12 items-center rounded-lg px-3 font-semibold"
           >
             Log in
           </Link>
-        </div>
-      </header>
+        }
+      />
 
       <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-8">
         <section className="flex flex-col gap-3">

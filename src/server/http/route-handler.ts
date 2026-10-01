@@ -1,9 +1,11 @@
 import { fail, toAppError } from "@/lib/api-response";
 import { logger } from "@/server/logger";
 
-type RouteHandler<Ctx> = (request: Request, context: Ctx) => Promise<Response>;
+type RouteHandler<Req extends Request, Ctx> = (request: Req, context: Ctx) => Promise<Response>;
 
-export function withErrorHandling<Ctx>(handler: RouteHandler<Ctx>): RouteHandler<Ctx> {
+export function withErrorHandling<Req extends Request, Ctx>(
+  handler: RouteHandler<Req, Ctx>,
+): RouteHandler<Req, Ctx> {
   return async (request, context) => {
     try {
       return await handler(request, context);

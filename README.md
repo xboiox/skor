@@ -26,4 +26,4 @@ Detail setup & perintah lain: [docs/TECH_DOC.md](docs/TECH_DOC.md#1-setup-lokal)
 
 ## Stack
 
-Next.js · TypeScript · Tailwind · PostgreSQL · Drizzle · Auth.js (Google) · SSE · Docker Compose
+Next.js · TypeScript · Tailwind · PostgreSQL · Drizzle · Better Auth (email + Google) · SSE · Docker Compose

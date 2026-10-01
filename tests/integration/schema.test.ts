@@ -167,7 +167,10 @@ describe("guest cleanup script", () => {
 
   it("deletes expired guest tournaments with all their rows and keeps the rest", async () => {
     // Arrange
-    const [owner] = await db.insert(users).values({ email: "host@example.com" }).returning();
+    const [owner] = await db
+      .insert(users)
+      .values({ name: "Host", email: "host@example.com" })
+      .returning();
     const expired = await createTournament({
       slug: "expired",
       expiresAt: new Date(Date.now() - ONE_HOUR_MS),

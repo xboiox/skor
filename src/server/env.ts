@@ -3,21 +3,40 @@ import { z } from "zod";
 const DEFAULT_GUEST_TTL_DAYS = 7;
 const MAX_GUEST_TTL_DAYS = 90;
 
-const envSchema = z.object({
-  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
-  APP_URL: z.url().default("http://localhost:3000"),
-  GUEST_TTL_DAYS: z.coerce
-    .number()
-    .int()
-    .min(1)
-    .max(MAX_GUEST_TTL_DAYS)
-    .default(DEFAULT_GUEST_TTL_DAYS),
-  // Auth becomes required in Fase 5.
-  AUTH_SECRET: z.string().min(32).optional(),
-  AUTH_GOOGLE_ID: z.string().optional(),
-  AUTH_GOOGLE_SECRET: z.string().optional(),
-});
+const MIN_SECRET_LENGTH = 32;
+
+const envSchema = z
+  .object({
+    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+    APP_URL: z.url().default("http://localhost:3000"),
+    GUEST_TTL_DAYS: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(MAX_GUEST_TTL_DAYS)
+      .default(DEFAULT_GUEST_TTL_DAYS),
+    AUTH_SECRET: z.string().min(MIN_SECRET_LENGTH),
+    AUTH_GOOGLE_ID: z.string().optional(),
+    AUTH_GOOGLE_SECRET: z.string().optional(),
+  })
+  // Google sign-in is optional, but its credentials only work as a pair.
+  .superRefine((env, ctx) => {
+    if (env.AUTH_GOOGLE_ID && !env.AUTH_GOOGLE_SECRET) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["AUTH_GOOGLE_SECRET"],
+        message: "Required when AUTH_GOOGLE_ID is set",
+      });
+    }
+    if (env.AUTH_GOOGLE_SECRET && !env.AUTH_GOOGLE_ID) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["AUTH_GOOGLE_ID"],
+        message: "Required when AUTH_GOOGLE_SECRET is set",
+      });
+    }
+  });
 
 export type Env = z.infer<typeof envSchema>;
 
@@ -40,4 +59,8 @@ let cachedEnv: Env | undefined;
 export function getEnv(): Env {
   cachedEnv ??= parseEnv(process.env);
   return cachedEnv;
+}
+
+export function isGoogleAuthEnabled(env: Env = getEnv()): boolean {
+  return Boolean(env.AUTH_GOOGLE_ID && env.AUTH_GOOGLE_SECRET);
 }

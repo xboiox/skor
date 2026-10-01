@@ -8,6 +8,20 @@
       "when": 1790826804327,
       "tag": "0000_init",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790839514741,
+      "tag": "0001_auth_drop_legacy",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790839534962,
+      "tag": "0002_auth_better_auth",
+      "breakpoints": true
     }
   ]
 }
