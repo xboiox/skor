@@ -18,21 +18,25 @@
 
 ## Fase 2 — Scoring engine (TDD)
 
-- [ ] Rally: `applyPoint`, `isComplete`, `validateFinal`
-- [ ] Tennis: poin dalam game (golden point & advantage), `formatGamePoint`
-- [ ] Tennis: `first_to` & `total_of`
-- [ ] Undo (via snapshot `prev_state`)
-- [ ] Coverage domain/scoring ≥ 95%
+- [x] Rally: `applyPoint`, `isComplete`, `validateFinal`
+- [x] Tennis: poin dalam game (golden point & advantage), `formatGamePoint`
+- [x] Tennis: `first_to` & `total_of`
+- [x] Auto-submit saat selesai (`statusForScore`, A6)
+- [x] Undo: `findUndoTarget` (pemulihan `prev_state` dilakukan service di Fase 7)
+- [x] Test simulasi invariant (ribuan poin acak ber-seed di semua konfigurasi)
+- [x] Coverage domain/scoring ≥ 95% (100% baris, 97.5% cabang)
 
 ## Fase 3 — Scheduling engine (TDD)
 
-- [ ] PRNG ber-seed + util shuffle (immutable)
-- [ ] Kapasitas & pemilihan bye yang adil
-- [ ] Americano: generator ronde + kriteria selesai (semua partner tercakup)
-- [ ] Americano: repeat home/away
-- [ ] Mexicano: ronde 1 acak + ronde berikutnya berdasarkan klasemen
-- [ ] Replace player: `planSubstitution` (temporary: new/bye player; permanent: new player)
-- [ ] Coverage domain/scheduling ≥ 95%
+- [x] PRNG ber-seed (mulberry32) + `shuffle` immutable + `deriveSeed`
+- [x] Kapasitas ronde & batas bawah jumlah ronde Americano
+- [x] Pemilihan bye yang adil + skor preferensi (cakupan pasangan untuk Americano)
+- [x] Minimum-cost perfect matching (branch & bound)
+- [x] Americano: generator jadwal + kriteria selesai (semua partner tercakup)
+- [x] Americano: repeat home/away
+- [x] Mexicano: ronde 1 acak + ronde berikutnya berdasarkan klasemen
+- [x] Replace player: `planSubstitution` (temporary: new/bye player; permanent: new player)
+- [x] Coverage domain/scheduling ≥ 95% (100% baris, 97% cabang)
 
 ## Fase 4 — Leaderboard engine (TDD)
 

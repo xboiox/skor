@@ -175,20 +175,25 @@ Match `approved` terkunci untuk player.
 
 ## 3. Scoring engine (`src/domain/scoring`)
 
-Signature:
+Fungsi murni, tidak melempar error — kegagalan dikembalikan sebagai `Result` (`src/domain/result.ts`).
 
 ```ts
 type ScoringConfig =
-  | { type: 'rally'; totalPoints: 16 | 21 | 24 | 32 }
-  | { type: 'tennis'; mode: 'first_to' | 'total_of'; games: number; deuce: 'golden_point' | 'advantage' };
+  | { type: "rally"; totalPoints: 16 | 21 | 24 | 32 }
+  | { type: "tennis"; mode: "first_to" | "total_of"; games: number; deuce: "golden_point" | "advantage" };
 
 type MatchScore = { scoreA: number; scoreB: number; gameA: number; gameB: number };
+type ScoringError = { code: "MATCH_COMPLETE" | "INVALID_FINAL_SCORE"; message: string };
 
-applyPoint(config, score, team: 'A' | 'B'): MatchScore      // melempar error jika match sudah selesai
+applyPoint(config, score, team: "A" | "B"): Result<MatchScore, ScoringError>
 isComplete(config, score): boolean
-validateFinal(config, scoreA, scoreB): Result<void, string>
-formatGamePoint(config, score): { a: string; b: string }    // "0" "15" "30" "40" "AD"
+statusForScore(config, score): "in_progress" | "submitted"       // A6: auto-submit saat selesai
+validateFinal(config, scoreA, scoreB): Result<MatchScore, ScoringError>
+formatGamePoint(deuce, { a, b }): { a: string; b: string; phase: "normal" | "deuce" | "advantage" | "golden_point" }
+findUndoTarget(events): event | null                           // event yang prev_state-nya dipulihkan
 ```
+
+Pemetaan error ke API: `MATCH_COMPLETE` → `409 INVALID_STATE`, `INVALID_FINAL_SCORE` → `400 VALIDATION_ERROR`.
 
 ### 3.1 Rally
 
@@ -203,7 +208,8 @@ formatGamePoint(config, score): { a: string; b: string }    // "0" "15" "30" "40
   - _golden_point_: poin tim > poin lawan (saat 3-3, poin berikutnya menang).
   - _advantage_: selisih ≥ 2.
 - Saat game dimenangkan: `score` tim +1, `gameA = gameB = 0`.
-- Tampilan: 0→"0", 1→"15", 2→"30", 3→"40"; advantage saat keduanya ≥ 3 → "40"/"40" atau "AD"/"40".
+- Deuce dinormalisasi: saat advantage hilang, poin kembali ke 3-3 (nilai tetap kecil, maks 4).
+- Tampilan: 0→"0", 1→"15", 2→"30", 3→"40"; 3-3 → "40"/"40" dengan `phase` `deuce` atau `golden_point`; 4-3 → "AD"/"40" (`advantage`).
 
 ### 3.3 Tennis — selesai match
 
@@ -212,6 +218,15 @@ formatGamePoint(config, score): { a: string; b: string }    // "0" "15" "30" "40
 - `validateFinal`:
   - `first_to`: tepat satu tim = X, tim lain < X.
   - `total_of`: jumlah = X.
+  - Semua skor harus bilangan bulat ≥ 0.
+
+### 3.4 Undo
+
+`findUndoTarget` menelusuri `score_events` dari yang terbaru:
+
+- `undo` → lewati satu event yang bisa di-undo berikutnya (mendukung undo berturut-turut).
+- Bisa di-undo: `point_a`, `point_b`, `set_final`. `reject` dilewati.
+- Batas: `approve` dan `host_edit` — undo tidak pernah menembus hasil yang sudah dikunci host.
 
 ## 4. Scheduling engine (`src/domain/scheduling`)
 
@@ -220,40 +235,41 @@ Semua fungsi deterministik dengan input `seed` (PRNG seperti mulberry32).
 ### 4.1 Kapasitas & bye
 
 ```
-slots      = min(courts * 4, floor(n / 4) * 4)
-matches    = slots / 4
-byeCount   = n - slots
+matches  = min(courts, floor(n / 4))
+playing  = matches * 4
+byes     = n - playing
 ```
 
-Pemilihan bye: pemain dengan jumlah bye paling sedikit → tie-break dengan urutan acak (seed). Pemain yang bye di ronde sebelumnya tidak di-bye lagi selama masih ada kandidat lain.
+Pemilihan bye (`selectByes`):
 
-### 4.2 Americano
+1. **Keadilan (wajib):** pemain dengan **jumlah match dimainkan terbanyak** istirahat lebih dulu. Untuk pemain lama ini setara dengan "bye paling sedikit"; pemain pengganti baru (yang masih sedikit main) otomatis main dulu.
+2. **Di antara kandidat yang sama-sama layak** (jumlah main sama), dipilih kombinasi dengan **skor preferensi** tertinggi. Semua kombinasi dicoba bila ≤ 256, selebihnya 256 sampel acak.
+   - Default (Mexicano): hindari bye berturut-turut.
+   - Americano: maksimalkan pasangan yang belum pernah berpartner di antara pemain yang main; bye berturut-turut hanya penalti kecil. (Aturan "hindari bye berturut-turut" yang kaku membuat dua grup bergantian terus dan tidak pernah berpasangan — mis. 8 pemain / 1 lapangan.)
 
-Tujuan: setiap pasangan pemain `{i, j}` pernah menjadi **partner** minimal sekali.
+### 4.2 Americano (`generateAmericanoSchedule`)
 
-Algoritma (greedy + random restart per ronde):
+Tujuan: setiap pasangan pemain pernah menjadi **partner** minimal sekali.
 
-1. Pilih pemain bye (4.1).
-2. Dari pemain aktif, bentuk pasangan dengan meminimalkan **skor biaya**:
-   - `partnerCount[i][j] × 100` (hindari partner berulang — prioritas utama)
-   - `opponentCount[i][j] × 10` (sebar lawan)
-3. Pasangkan tim menjadi match, minimalkan pengulangan lawan.
-4. Ulangi langkah 2–3 sebanyak K percobaan (mis. 200) dengan urutan acak berbeda; ambil jadwal ronde dengan biaya terendah.
-5. Ulangi ronde sampai semua pasangan partner tercakup, atau batas aman `maxRounds = n × 2` tercapai.
+Per ronde:
 
-Catatan:
+1. Pilih bye (4.1, dengan skor cakupan).
+2. Bentuk tim: **minimum-cost perfect matching** (branch & bound, ada batas langkah) dengan biaya = berapa kali dua pemain sudah berpartner. Berhenti segera bila ketemu matching tanpa partner berulang.
+3. Pasangkan tim menjadi match dengan matching yang sama; biaya = jumlah pertemuan sebagai lawan (lawan tersebar).
 
-- Jumlah ronde minimum ≈ `ceil( n(n-1)/2 / (slots/2) )`. Contoh 8 pemain, 2 lapangan → 7 ronde.
-- Untuk n dengan jadwal sempurna yang dikenal (whist tournament, n = 4k atau 4k+1), fase berikutnya bisa memakai tabel jadwal sempurna sebagai optimasi.
-- **Repeat (home/away)**: salin semua ronde leg 1 ke leg 2 dengan tim A/B ditukar, nomor ronde dilanjutkan.
+Jadwal lengkap dibangun berulang dengan seed turunan (`deriveSeed`); dipilih yang: semua pasangan tercakup → ronde paling sedikit → lawan paling tersebar (Σ count²). Jumlah percobaan 2–24, dibatasi total 400 ronde dibangun agar tetap cepat. Berhenti lebih awal bila mencapai batas bawah `ceil(n(n-1) / playing)`.
 
-### 4.3 Mexicano
+Hasil terukur (seed 1, ≤ 24 pemain): mayoritas kombinasi tepat di batas bawah (mis. 8/2 → 7 ronde, 12/3 → 11, 16/4 → 15, 8/1 → 14); kasus bye sangat banyak (20–24 pemain di 1–2 lapangan) lebih 1–14 ronde. Semua < 0,5 detik; 40 pemain / 10 lapangan juga < 2 detik.
+
+**Repeat (home/away)** (`repeatAsSecondLeg`): salin ronde leg 1 dengan tim A/B ditukar, nomor ronde dilanjutkan, `leg = 2`. Ditolak bila sudah pernah di-repeat.
+
+### 4.3 Mexicano (`generateMexicanoFirstRound`, `generateMexicanoRound`)
 
 - **Ronde 1**: urutan acak (seed), dikelompokkan per 4.
 - **Ronde berikutnya** (dipicu host, hanya jika semua match ronde berjalan _approved_):
-  1. Hitung leaderboard (hasil approved).
-  2. Pilih bye (4.1).
-  3. Urutkan pemain aktif sesuai peringkat; grup per 4: `[r1, r2, r3, r4]` → **r1 & r3 vs r2 & r4**.
+  1. Service menghitung leaderboard dan mengirim `ranking` = pemain **aktif** terurut peringkat.
+  2. Pilih bye (4.1, skor default).
+  3. Sisa pemain tetap urut peringkat; grup per 4: `[r1, r2, r3, r4]` → **r1 & r3 vs r2 & r4**.
   4. Grup peringkat teratas di Court 1, dst.
 
 ### 4.4 Replace player (`src/domain/scheduling/substitute.ts`)
@@ -261,12 +277,15 @@ Catatan:
 Fungsi murni:
 
 ```ts
-planSubstitution(input: {
-  rounds; matches; byes;            // jadwal saat ini
-  type: 'temporary' | 'permanent';
-  fromRound: number;
-  outPlayerId; inPlayerId;
-}): Result<{ matchUpdates: SlotUpdate[]; byeUpdates: ByeUpdate[] }, string>
+planSubstitution({
+  type: "temporary" | "permanent",
+  fromRound,
+  outPlayerId,
+  substitute: { source: "new_player" | "bye_player", playerId },  // pemain baru dibuat service lebih dulu
+  players,  // { id, status }
+  matches,  // { id, roundNumber, status, teamA, teamB }
+  byes,     // { roundNumber, playerIds }
+}): Result<{ matchUpdates; byeUpdates; playerUpdates }, SchedulingError>
 ```
 
 Aturan:
@@ -279,6 +298,9 @@ Aturan:
    - **Permanent**: **new player saja** (ditolak jika `inPlayer` adalah pemain lama).
 5. `inPlayer` tidak boleh = `outPlayer`, tidak boleh _withdrawn_, dan tidak boleh muncul dua kali dalam satu ronde.
 6. Mexicano: ronde berikutnya di-generate dari pemain `active` saja (pemain baru ikut, pemain withdrawn tidak).
+7. **Temporary**: pemain yang diganti harus terjadwal main (bukan bye) di ronde itu dan match-nya masih `scheduled`.
+8. **Permanent**: bye milik pemain lama di ronde-ronde berikutnya juga diambil alih pengganti (bentuk jadwal tetap).
+9. **Pemain baru sebagai pengganti temporary** ditandai `withdrawn` mulai ronde berikutnya (`withdrawn_from_round = fromRound + 1`) agar tidak ikut di-schedule Mexicano. Di leaderboard ditampilkan sebagai pemain pengganti.
 
 Service menyimpan hasilnya dalam satu transaksi (update slot match, byes, status pemain, baris `substitutions`) lalu `NOTIFY tournament.updated`.
 
