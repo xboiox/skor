@@ -180,7 +180,8 @@ export const accessTokens = pgTable(
       .notNull()
       .references(() => tournaments.id, { onDelete: "cascade" }),
     role: accessRole().notNull(),
-    tokenHash: text().notNull().unique(), // SHA-256 of the token; the token itself is never stored
+    tokenHash: text().notNull().unique(), // SHA-256 of the token, used for lookups
+    tokenCiphertext: text(), // player link only: AES-256-GCM so it can be shown again (admin: null)
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex("access_tokens_tournament_role_unique").on(t.tournamentId, t.role)],

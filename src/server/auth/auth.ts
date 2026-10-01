@@ -39,10 +39,11 @@ function createAuth() {
 export type Auth = ReturnType<typeof createAuth>;
 export type AuthSession = NonNullable<Awaited<ReturnType<Auth["api"]["getSession"]>>>;
 
-const globalForAuth = globalThis as unknown as { skorAuth?: Auth };
+// Per module (not global) so it follows the current Drizzle instance after hot reloads.
+let auth: Auth | undefined;
 
 /** Created lazily so importing this module never needs env vars (e.g. during `next build`). */
 export function getAuth(): Auth {
-  globalForAuth.skorAuth ??= createAuth();
-  return globalForAuth.skorAuth;
+  auth ??= createAuth();
+  return auth;
 }

@@ -104,3 +104,42 @@ test("an invalid tournament link shows a friendly page", async ({ page }) => {
   expect(response?.status()).toBe(404);
   await expect(page.getByRole("heading", { name: "This link is not valid" })).toBeVisible();
 });
+
+test("a valid tournament link redirects to the app URL, not an internal host", async ({
+  request,
+  baseURL,
+}) => {
+  const created = await request.post("/api/tournaments", {
+    headers: { origin: baseURL! },
+    data: {
+      name: "Link check",
+      date: "2026-10-03",
+      matchType: "mexicano",
+      courts: 1,
+      scoring: { type: "rally", totalPoints: 16 },
+      players: ["A", "B", "C", "D"],
+    },
+  });
+  const { data } = await created.json();
+  const res = await request.get(data.links.player, { maxRedirects: 0 });
+  expect(res.status()).toBe(303);
+  expect(res.headers()["location"]).toBe(`${new URL(baseURL!).origin}/t/${data.slug}/play`);
+  expect(res.headers()["set-cookie"]).toContain(`skor_player_${data.slug}=`);
+  expect(res.headers()["set-cookie"]).toMatch(/HttpOnly/i);
+});
+
+test("the password never ends up in the URL, even if submitted before the page is interactive", async ({
+  browser,
+}) => {
+  // Block JavaScript to simulate a tap before hydration on a slow phone.
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  await page.goto("/login");
+  await page.getByLabel("Email").fill("someone@example.com");
+  await page.getByLabel("Password").fill("super secret password");
+  await page.getByLabel("Password").press("Enter");
+  await page.waitForLoadState();
+  expect(page.url()).not.toContain("password");
+  expect(page.url()).not.toContain("secret");
+  await context.close();
+});

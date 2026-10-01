@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { authClient } from "@/lib/auth-client";
 
 const MIN_PASSWORD_LENGTH = 8;
@@ -27,6 +28,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isRegister = mode === "register";
+  const isHydrated = useHydrated();
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -54,7 +56,8 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
     "min-h-12 w-full rounded-xl border border-border bg-surface px-4 text-base text-foreground placeholder:text-muted";
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate={false}>
+    // method="post": if the form is ever submitted natively, the password must not land in the URL.
+    <form method="post" onSubmit={handleSubmit} className="flex flex-col gap-4">
       {isRegister && (
         <label className="flex flex-col gap-1.5">
           <span className="font-semibold">Name</span>
@@ -99,7 +102,7 @@ export function AuthForm({ mode, redirectTo }: AuthFormProps) {
 
       <button
         type="submit"
-        disabled={isSubmitting}
+        disabled={isSubmitting || !isHydrated}
         className="bg-primary text-primary-foreground min-h-14 rounded-xl text-lg font-bold disabled:opacity-60"
       >
         {isSubmitting ? "Please wait…" : isRegister ? "Create account" : "Log in"}

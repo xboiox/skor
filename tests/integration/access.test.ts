@@ -1,6 +1,10 @@
 import { afterAll, beforeEach, describe, expect, it } from "vitest";
 import { AppError } from "@/lib/api-response";
-import { issueAccessTokens, verifyAccessToken } from "@/server/access/access-repository";
+import {
+  getPlayerToken,
+  issueAccessTokens,
+  verifyAccessToken,
+} from "@/server/access/access-repository";
 import {
   requireHost,
   requireScorer,
@@ -82,6 +86,19 @@ describe("access tokens", () => {
     const stored = rows.map((r) => r.token_hash as string);
     expect(stored).not.toContain(tokens.admin);
     expect(stored).not.toContain(tokens.player);
+  });
+
+  it("can show the player link again but never the admin link", async () => {
+    const t = await createTournament("abc123");
+    const tokens = await issueAccessTokens(db, t.id);
+    expect(await getPlayerToken(db, t.id)).toBe(tokens.player);
+    const rows = await sql`select role, token_ciphertext from access_tokens order by role`;
+    expect(rows.find((r) => r.role === "admin")?.token_ciphertext).toBeNull();
+    expect(rows.find((r) => r.role === "player")?.token_ciphertext).not.toContain(tokens.player);
+  });
+
+  it("returns null for the player link of an unknown tournament", async () => {
+    expect(await getPlayerToken(db, "00000000-0000-4000-8000-000000000000")).toBeNull();
   });
 
   it("rejects a token from another tournament", async () => {

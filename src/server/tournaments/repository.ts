@@ -30,3 +30,20 @@ export async function findLiveTournamentBySlug(
     .limit(1);
   return row ?? null;
 }
+
+export async function findLiveTournamentById(
+  db: Database,
+  id: string,
+): Promise<TournamentRef | null> {
+  const [row] = await db
+    .select({
+      id: tournaments.id,
+      slug: tournaments.slug,
+      ownerId: tournaments.ownerId,
+      expiresAt: tournaments.expiresAt,
+    })
+    .from(tournaments)
+    .where(and(eq(tournaments.id, id), isLive()))
+    .limit(1);
+  return row ?? null;
+}

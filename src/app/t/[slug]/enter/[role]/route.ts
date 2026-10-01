@@ -16,11 +16,12 @@ const INVALID_LINK_HTML = `<!doctype html><meta name="viewport" content="width=d
 export const GET = withErrorHandling(
   async (request: NextRequest, { params }: RouteContext<"/t/[slug]/enter/[role]">) => {
     const { slug, role } = await params;
+    const { APP_URL } = getEnv();
     const exchange = await exchangeAccessLink(getDb(), {
       slug,
       role,
       token: request.nextUrl.searchParams.get("k") ?? "",
-      isSecure: getEnv().APP_URL.startsWith("https://"),
+      isSecure: APP_URL.startsWith("https://"),
     });
 
     if (!exchange) {
@@ -30,7 +31,8 @@ export const GET = withErrorHandling(
       });
     }
 
-    const response = NextResponse.redirect(new URL(exchange.redirectTo, request.url), 303);
+    // Build from APP_URL: behind Docker or a proxy, request.url carries the internal host (e.g. 0.0.0.0).
+    const response = NextResponse.redirect(new URL(exchange.redirectTo, APP_URL), 303);
     response.cookies.set(exchange.cookie.name, exchange.cookie.value, exchange.cookie.options);
     response.headers.set("referrer-policy", "no-referrer");
     return response;

@@ -414,7 +414,7 @@ Guard (`src/server/access/guards.ts`), menerima `{ db, cookies, userId }` agar b
 
 Cookie identitas divalidasi sebagai UUID sebelum dipakai di query (cookie bisa dimanipulasi).
 
-Token admin hanya ditampilkan **sekali** saat turnamen guest dibuat (dengan tombol copy & peringatan untuk menyimpannya).
+Token admin hanya ditampilkan **sekali** saat turnamen dibuat (dengan tombol copy & peringatan untuk guest). Player token juga disimpan **terenkripsi** (`access_tokens.token_ciphertext`, AES-256-GCM, kunci diturunkan dari `AUTH_SECRET`) agar player link bisa ditampilkan ulang di halaman admin (QR, share ulang) tanpa membuat token baru yang memutus akses pemain yang sudah masuk. Bila `AUTH_SECRET` diganti, player link lama tidak bisa ditampilkan lagi (perlu diterbitkan ulang).
 
 ## 8. Cleanup guest
 

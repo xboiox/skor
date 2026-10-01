@@ -107,9 +107,9 @@ type ApiResponse<T> =
 | Method | Path                                                       | Akses         | Keterangan                                                                           |
 | ------ | ---------------------------------------------------------- | ------------- | ------------------------------------------------------------------------------------ |
 | POST   | `/api/tournaments`                                         | publik / user | Buat turnamen + pemain. Guest → response berisi `adminUrl`, `playerUrl`, `publicUrl` |
-| GET    | `/api/tournaments/mine`                                    | user          | Daftar turnamen milik user                                                           |
+| —      | `/api/tournaments/mine`                                    | user          | Tidak dibuat: `/dashboard` membaca daftar turnamen langsung di server                |
 | GET    | `/api/t/:slug`                                             | viewer        | State lengkap: info, pemain, ronde, match                                            |
-| PATCH  | `/api/tournaments/:id`                                     | host          | Ubah info (hanya saat `draft`)                                                       |
+| PATCH  | `/api/tournaments/:id`                                     | host          | Belum dibuat (backlog): ubah info saat `draft`                                       |
 | POST   | `/api/tournaments/:id/players`                             | host          | Tambah pemain (hanya saat `draft`)                                                   |
 | DELETE | `/api/tournaments/:id/players/:playerId`                   | host          | Hapus pemain (hanya saat `draft`)                                                    |
 | POST   | `/api/tournaments/:id/start`                               | host          | Generate jadwal, status → `active`                                                   |
@@ -143,6 +143,8 @@ type ApiResponse<T> =
 | Method | Path                    | Akses        | Body                                  |
 | ------ | ----------------------- | ------------ | ------------------------------------- |
 | POST   | `/api/t/:slug/identity` | player token | `{ playerId }` → set cookie identitas |
+
+Semua mutasi (POST/PATCH/DELETE) wajib **same-origin** (`Origin` = `APP_URL`, atau `Sec-Fetch-Site: same-origin`) dan, bila punya body, `Content-Type: application/json` — perlindungan CSRF untuk cookie session/admin. Respons create: `201 { id, slug, isGuest, links: { admin, player, public } }`.
 
 ### Contoh: create tournament
 

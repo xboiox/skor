@@ -59,11 +59,15 @@
 
 ## Fase 6 — Tournament management
 
-- [ ] API `POST /api/tournaments` (guest & user) + validasi Zod
-- [ ] Halaman `/tournaments/new` (form dinamis) & `/tournaments/new/created` (link + copy)
-- [ ] Kelola pemain saat `draft`
-- [ ] `start` → generate jadwal & simpan
-- [ ] `/dashboard` untuk user login
+- [x] Validasi Zod bersama (form + API): nama, tanggal, format, lapangan, scoring, 4–100 pemain unik
+- [x] API `POST /api/tournaments` (guest & user) + cek same-origin/JSON (CSRF)
+- [x] Player link disimpan terenkripsi (AES-256-GCM) agar bisa ditampilkan lagi; admin link tetap hash saja
+- [x] Form `/tournaments/new` 4 langkah (Details → Format → Players → Review), paste daftar pemain, estimasi ronde
+- [x] Layar "Tournament created" dengan admin/player/public link (Copy + Share)
+- [x] Kelola pemain saat `draft` (API + halaman `/t/[slug]/admin`)
+- [x] `start` → generate jadwal & simpan (Americano semua ronde, Mexicano ronde 1), aman dari klik ganda (`FOR UPDATE`)
+- [x] `/dashboard` menampilkan turnamen milik user
+- [x] Form tahan hydration lambat: submit aktif setelah halaman siap, `method="post"` (password tidak pernah masuk URL)
 
 ## Fase 7 — Scoring flow & approval
 
