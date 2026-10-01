@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — see docs/UI_GUIDELINES.md.
+ * High contrast for outdoor use; dark palette follows the system setting.
+ */
+:root {
+  --background: #f4f6f9;
+  --surface: #ffffff;
+  --foreground: #0b1220;
+  --muted: #4a5568;
+  --border: #d5dbe3;
+  --primary: #1647c2; /* court blue */
+  --primary-foreground: #ffffff;
+  --accent: #b8e01f; /* ball green */
+  --accent-foreground: #0b1220;
+  --danger: #c0262d;
+  --success: #12753d;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0f1a;
+    --surface: #131b2c;
+    --foreground: #f4f6f9;
+    --muted: #a3afc2;
+    --border: #2a3550;
+    --primary: #6f9bff;
+    --primary-foreground: #0a0f1a;
+    --accent: #d4ff3a;
+    --accent-foreground: #0a0f1a;
+    --danger: #ff6b70;
+    --success: #4ade80;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  /* Score numerals, readable from 1–2 m away */
+  --text-score: clamp(4.5rem, 22vw, 7.5rem);
+  --text-score--line-height: 1;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-size: 1rem; /* ≥16px prevents iOS zoom on input focus */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  button,
+  [role="button"],
+  a {
+    touch-action: manipulation; /* no double-tap zoom delay */
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
