@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useState } from "react";
 import { formatGamePoint, type ScoringConfig, type Team } from "@/domain/scoring";
+import { LiveStatus } from "@/components/realtime/live-status";
 import { useHydrated } from "@/hooks/use-hydrated";
+import { useOnline } from "@/hooks/use-online";
+import { useTournamentStream } from "@/hooks/use-tournament-stream";
+import { apiRequest } from "@/lib/api-client";
 import { formatFinalHint } from "@/lib/format";
 import type { MatchView } from "@/server/matches/view";
 import { FinalSheet } from "./final-sheet";
@@ -28,12 +32,22 @@ const STATUS_TEXT = {
 export function ScoringScreen({ slug, match, roundNumber, config, teamNames }: ScoringScreenProps) {
   useWakeLock();
   const isHydrated = useHydrated();
-  const { state, notice, isBusy, isPending, tap, send, clearNotice } = useScoring(
+  const { state, notice, isBusy, isPending, tap, send, receive, clearNotice } = useScoring(
     match.id,
     config,
     match,
   );
   const [isFinalOpen, setIsFinalOpen] = useState(false);
+  const isOnline = useOnline();
+  const streamStatus = useTournamentStream(slug, {
+    onEvent: (event) => {
+      if (event.type === "match.updated") receive(event.match);
+    },
+    onResync: async () => {
+      const latest = await apiRequest<MatchView>(`/api/matches/${match.id}`, { method: "GET" });
+      if (latest.success) receive(latest.data);
+    },
+  });
 
   const score = displayedScore(config, state);
   const locked = isLocked(config, state);
@@ -43,7 +57,8 @@ export function ScoringScreen({ slug, match, roundNumber, config, teamNames }: S
       ? formatGamePoint(config.deuce, { a: score.gameA, b: score.gameB })
       : null;
   const left = config.type === "rally" ? config.totalPoints - score.scoreA - score.scoreB : null;
-  const canTap = isHydrated && !locked;
+  // Offline taps would be lost: block them instead of pretending (docs/UI_GUIDELINES.md §6).
+  const canTap = isHydrated && !locked && isOnline;
 
   const panel = (team: Team) => {
     const isA = team === "A";
@@ -77,8 +92,9 @@ export function ScoringScreen({ slug, match, roundNumber, config, teamNames }: S
         >
           ← Matches
         </Link>
-        <span className="text-sm font-semibold">
+        <span className="flex flex-col items-center text-sm font-semibold">
           Court {match.court} · Round {roundNumber}
+          <LiveStatus status={isOnline ? streamStatus : "offline"} />
         </span>
         <span className="text-muted min-w-20 px-2 text-right text-sm font-bold">
           {isPending ? "Saving…" : STATUS_TEXT[status]}
@@ -96,6 +112,11 @@ export function ScoringScreen({ slug, match, roundNumber, config, teamNames }: S
         {panel("B")}
       </main>
 
+      {!isOnline && (
+        <p role="alert" className="bg-danger px-4 py-2 text-center font-semibold text-white">
+          No connection — scoring is paused until you are back online.
+        </p>
+      )}
       {notice && !isFinalOpen && (
         <p role="alert" className="bg-danger px-4 py-2 text-center font-semibold text-white">
           {notice}

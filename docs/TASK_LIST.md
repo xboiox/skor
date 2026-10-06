@@ -85,10 +85,13 @@
 
 ## Fase 8 — Realtime
 
-- [ ] Hub LISTEN/NOTIFY dengan auto-reconnect
-- [ ] Endpoint SSE + heartbeat
-- [ ] Hook client `useTournamentStream` (refetch saat event / reconnect)
-- [ ] Integration test: update di satu client diterima client lain
+- [x] `notifyTournament` di dalam transaksi semua service yang mengubah data (event hanya setelah commit)
+- [x] Hub LISTEN/NOTIFY (satu koneksi per proses, auto-reconnect postgres.js, aman dari hot reload)
+- [x] Endpoint SSE `/api/t/:slug/stream` + heartbeat + `ready` setelah LISTEN aktif + lepas subscription saat putus
+- [x] Hook `useTournamentStream` (status, resync saat reconnect / tab kembali), `LiveUpdates`, indikator ● Live
+- [x] Layar scoring menerima update HP lain (`receiveRemote`), resync via `GET /api/matches/:id`, kunci saat offline
+- [x] Integration test: event diterima subscriber, tidak bocor antar turnamen, tidak ada event saat rollback, SSE end-to-end
+- [x] E2E: penonton melihat skor live, antrian approval terisi sendiri, dua HP sinkron, halaman waiting → mulai, offline
 
 ## Fase 9 — Leaderboard & halaman publik
 

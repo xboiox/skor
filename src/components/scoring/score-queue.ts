@@ -31,3 +31,9 @@ export function isLocked(config: ScoringConfig, state: QueueState): boolean {
   if (state.server.status === "submitted" || state.server.status === "approved") return true;
   return isComplete(config, displayedScore(config, state));
 }
+
+/** Applies a newer state pushed by another phone, unless our own taps are still in flight. */
+export function receiveRemote(state: QueueState, remote: ServerMatch): QueueState {
+  if (state.queue.length > 0 || remote.version <= state.server.version) return state;
+  return { server: remote, queue: [] };
+}

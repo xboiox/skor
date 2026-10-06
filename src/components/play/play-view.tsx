@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { apiRequest } from "@/lib/api-client";
 import type { TournamentBoard } from "@/server/tournaments/board";
 import { MatchCard } from "./match-card";
@@ -16,13 +15,6 @@ export function PlayView({ board, meId }: PlayViewProps) {
   const router = useRouter();
   const { slug } = board.tournament;
   const names = new Map(board.players.map((p) => [p.id, p.name]));
-
-  // Until live updates (Fase 8), refresh when the player comes back to the app.
-  useEffect(() => {
-    const onVisible = () => document.visibilityState === "visible" && router.refresh();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [router]);
 
   const open = board.rounds.filter((r) => r.status !== "completed");
   const done = board.rounds.filter((r) => r.status === "completed").reverse();

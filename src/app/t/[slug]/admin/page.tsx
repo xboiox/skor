@@ -6,6 +6,7 @@ import { ResultsPanel } from "@/components/admin/results-panel";
 import { TournamentControls } from "@/components/admin/tournament-controls";
 import { TournamentNav } from "@/components/tournament/tournament-nav";
 import { AppHeader } from "@/components/app-header";
+import { LiveUpdates } from "@/components/realtime/live-updates";
 import { LinkCard } from "@/components/share/link-card";
 import { AppError } from "@/lib/api-response";
 import { formatDate, formatFinalHint, formatMatchType, formatScoring } from "@/lib/format";
@@ -74,7 +75,7 @@ export default async function AdminPage({ params }: PageProps<"/t/[slug]/admin">
 
   return (
     <div className="flex flex-1 flex-col">
-      <AppHeader />
+      <AppHeader right={<LiveUpdates slug={slug} />} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 pt-6">
         <div>
           <p className="text-muted text-sm font-semibold">

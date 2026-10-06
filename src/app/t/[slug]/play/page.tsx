@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { LiveUpdates } from "@/components/realtime/live-updates";
 import { IdentityPicker } from "@/components/play/identity-picker";
 import { PlayView } from "@/components/play/play-view";
 import { TournamentNav } from "@/components/tournament/tournament-nav";
@@ -54,7 +55,7 @@ export default async function PlayPage({ params }: PageProps<"/t/[slug]/play">) 
 
   return (
     <div className="flex flex-1 flex-col">
-      <AppHeader />
+      <AppHeader right={<LiveUpdates slug={slug} />} />
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-6">
         <div>
           <p className="text-muted text-sm font-semibold">

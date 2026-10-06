@@ -357,35 +357,28 @@ Mexicano: service memakai urutan `rows` (mode `final`, hanya pemain `active`) se
 
 ### 6.1 Alur
 
-1. Service menulis perubahan dalam transaksi, lalu `SELECT pg_notify('tournament_events', json)` di transaksi yang sama.
-2. App menjaga **satu koneksi LISTEN** (`src/server/realtime/hub.ts`) dan meneruskan event ke subscriber SSE per `tournamentId`.
-3. Client: `EventSource('/api/tournaments/:id/stream')`.
+1. Service menulis perubahan dalam transaksi dan memanggil `notifyTournament(tx, event)` (`pg_notify('tournament_events', json)`) **di transaksi yang sama**. Postgres mengirim NOTIFY hanya setelah commit — rollback tidak pernah menghasilkan event.
+2. `RealtimeHub` (`src/server/realtime/hub.ts`) memegang **satu koneksi LISTEN per proses** (postgres.js otomatis menyambung ulang) dan membagikan event ke subscriber per `tournamentId`. Disimpan di `globalThis` agar hot reload tidak membuka LISTEN ganda.
+3. `GET /api/t/:slug/stream` (publik, seperti leaderboard) → Server-Sent Events. Urutan: `retry: 3000` → subscribe ke hub → `event: ready` (dikirim **setelah** LISTEN aktif, jadi tidak ada perubahan yang terlewat) → event → heartbeat `: ping` tiap 25 detik. Saat klien putus, subscription dilepas.
 
-### 6.2 Payload event
+### 6.2 Event
 
-```json
-{ "tournamentId": "…", "type": "match.updated", "matchId": "…", "version": 12 }
-```
+| Event                | Payload                                                                      | Dikirim oleh                                                                       |
+| -------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `match.updated`      | `{ tournamentId, type, match }` — `match` = `MatchView` lengkap (± 400 byte) | Setiap perubahan skor/approval (`saveMatch`)                                       |
+| `tournament.updated` | `{ tournamentId, type }`                                                     | Ronde selesai, start, next round, repeat, end, replace player, tambah/hapus pemain |
 
-Tipe: `match.updated`, `round.created`, `tournament.updated`, `leaderboard.updated`.
-Payload sengaja kecil (batas NOTIFY 8KB). Client lalu mengambil state terbaru via GET (atau memakai data yang sudah ada jika versinya sama).
+Payload divalidasi Zod saat diterima (`parseEvent`); payload rusak diabaikan dan dicatat.
 
-### 6.3 Ketahanan koneksi
+### 6.3 Klien
 
-- Heartbeat komentar SSE tiap 25 detik.
-- Saat reconnect, client melakukan full refetch state turnamen.
-- Hub melakukan reconnect LISTEN otomatis jika koneksi DB terputus.
+- `useTournamentStream(slug)` → `EventSource`, status `connecting / live / reconnecting / offline`; saat tersambung ulang atau tab kembali aktif → **resync** (refresh penuh), karena event selama terputus tidak dikirim ulang.
+- `LiveUpdates` (halaman pemain & admin): `router.refresh()` dengan debounce 300 ms + indikator ● Live.
+- Layar scoring: `match.updated` untuk match ini langsung diterapkan **jika** versinya lebih baru dan tidak ada tap yang sedang dikirim (`receiveRemote`); resync mengambil `GET /api/matches/:id`. Saat offline, tombol skor dikunci dengan pesan jelas.
 
 ### 6.4 Konflik
 
-Aksi skor: `POST /api/matches/:id/actions { type, expectedVersion }`
-
-```sql
-UPDATE matches SET …, version = version + 1
-WHERE id = $1 AND version = $expectedVersion
-```
-
-0 baris ter-update → `409` + state terbaru → client menampilkan state baru (tanpa double count).
+Aksi skor: `POST /api/matches/:id/actions { action, expectedVersion }` → baris match dikunci (`FOR UPDATE`), versi dicek → `409 VERSION_CONFLICT` + `details.match` (state terbaru) bila basi. Dengan realtime, konflik jarang terjadi (HP lain sudah tersinkron), tetapi tetap ditangani bila dua tap benar-benar bersamaan.
 
 ## 7. Akses & token
 

@@ -1,6 +1,7 @@
 import { and, asc, eq, ne } from "drizzle-orm";
 import type { Transaction } from "@/server/db/client";
 import { matches, rounds } from "@/server/db/schema";
+import { notifyTournament } from "@/server/realtime/notify";
 
 /**
  * Marks a round completed once every match is approved, then activates the next pending round
@@ -19,6 +20,7 @@ export async function refreshRoundProgress(
   if (open) return;
 
   await tx.update(rounds).set({ status: "completed" }).where(eq(rounds.id, roundId));
+  await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
 
   const [active] = await tx
     .select({ id: rounds.id })

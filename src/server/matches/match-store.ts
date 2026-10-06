@@ -5,6 +5,7 @@ import type { Transaction } from "@/server/db/client";
 import { matches, scoreEvents, tournaments, type MatchSnapshot } from "@/server/db/schema";
 import { scoringConfigOf } from "./scoring-config";
 import { toMatchView, type MatchRow, type MatchView } from "./view";
+import { notifyTournament } from "@/server/realtime/notify";
 
 export type Actor =
   | { readonly role: "host"; readonly userId: string | null }
@@ -83,7 +84,13 @@ export async function saveMatch(
     prevState: snapshotOf(locked.match),
   });
 
-  return toMatchView(updated!, locked.config);
+  const view = toMatchView(updated!, locked.config);
+  await notifyTournament(tx, {
+    tournamentId: locked.tournamentId,
+    type: "match.updated",
+    match: view,
+  });
+  return view;
 }
 
 export function assertNotApproved(match: MatchRow): void {

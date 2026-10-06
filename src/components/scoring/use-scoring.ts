@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ScoringConfig, Team } from "@/domain/scoring";
 import { apiRequest } from "@/lib/api-client";
 import type { MatchView } from "@/server/matches/view";
-import { enqueuePoint, type QueueState, type ServerMatch } from "./score-queue";
+import { enqueuePoint, receiveRemote, type QueueState, type ServerMatch } from "./score-queue";
 
 const TAP_VIBRATION_MS = 15;
 
@@ -89,6 +89,14 @@ export function useScoring(matchId: string, config: ScoringConfig, initial: Matc
     [state, url, handleFailure],
   );
 
+  /** A newer state pushed by another phone over the realtime stream. */
+  const receive = useCallback(
+    (match: MatchView) => {
+      if (match.id === matchId) setState((s) => receiveRemote(s, toServer(match)));
+    },
+    [matchId],
+  );
+
   return {
     state,
     notice,
@@ -96,6 +104,7 @@ export function useScoring(matchId: string, config: ScoringConfig, initial: Matc
     isPending: state.queue.length > 0,
     tap,
     send,
+    receive,
     clearNotice: () => setNotice(null),
   };
 }

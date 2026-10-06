@@ -1,80 +1,5 @@
-import { expect, test, type Browser, type BrowserContext, type Page } from "@playwright/test";
-
-const PLAYERS = ["Andi", "Budi", "Citra", "Dewi", "Eka", "Fajar", "Gita", "Hadi"];
-
-type Created = {
-  id: string;
-  slug: string;
-  links: { admin: string; player: string; public: string };
-};
-
-function randomIp(): string {
-  const octet = () => Math.floor(Math.random() * 250) + 1;
-  return `10.${octet()}.${octet()}.${octet()}`;
-}
-
-/** A separate phone: same device profile (viewport, touch, baseURL) as the running project. */
-async function newDevice(browser: Browser): Promise<BrowserContext> {
-  const { use } = test.info().project;
-  return browser.newContext({ ...use, extraHTTPHeaders: { "x-forwarded-for": randomIp() } });
-}
-
-/** Creates and starts a tournament; returns the host's browser context (admin cookie set). */
-async function startedTournament(
-  browser: Browser,
-  baseURL: string,
-  overrides: Record<string, unknown> = {},
-): Promise<{ created: Created; host: BrowserContext }> {
-  const host = await newDevice(browser);
-  const res = await host.request.post("/api/tournaments", {
-    headers: { origin: baseURL },
-    data: {
-      name: "Scoring night",
-      date: "2026-10-03",
-      matchType: "americano",
-      courts: 2,
-      scoring: { type: "rally", totalPoints: 16 },
-      players: PLAYERS,
-      ...overrides,
-    },
-  });
-  const created = (await res.json()).data as Created;
-  await host.request.get(created.links.admin);
-  const start = await host.request.post(`/api/tournaments/${created.id}/start`, {
-    headers: { origin: baseURL },
-  });
-  expect(start.ok()).toBe(true);
-  return { created, host };
-}
-
-async function openReady(page: Page, url: string) {
-  await page.goto(url);
-  await page.waitForLoadState("networkidle");
-}
-
-/** A player device: opens the player link and chooses who they are. */
-async function joinAs(browser: Browser, created: Created, name: string): Promise<Page> {
-  const page = await (await newDevice(browser)).newPage();
-  await openReady(page, created.links.player);
-  await page.getByRole("button", { name: `I am ${name}` }).click();
-  await expect(page.getByText(`You: ${name}`)).toBeVisible();
-  return page;
-}
-
-async function openMyMatch(page: Page) {
-  await page
-    .getByRole("heading", { name: /Your next match/ })
-    .locator("..")
-    .getByRole("link")
-    .click();
-  await page.waitForURL(/\/match\//);
-  await page.waitForLoadState("networkidle");
-}
-
-async function tap(page: Page, team: "A" | "B", times: number) {
-  const panel = page.getByRole("button", { name: /^Point for/ }).nth(team === "A" ? 0 : 1);
-  for (let i = 0; i < times; i += 1) await panel.click();
-}
+import { expect, test } from "@playwright/test";
+import { joinAs, newDevice, openMyMatch, openReady, startedTournament, tap } from "./helpers";
 
 test("a player scores a match live and the host approves it", async ({ browser, baseURL }) => {
   const { created, host } = await startedTournament(browser, baseURL!);
@@ -121,18 +46,21 @@ test("undo and the final-result sheet", async ({ browser, baseURL }) => {
   await expect(player.getByText("Waiting for host approval")).toBeVisible();
 });
 
-test("two phones scoring the same match stay in sync", async ({ browser, baseURL }) => {
+test("a phone that missed live updates resyncs on its next tap", async ({ browser, baseURL }) => {
   const { created } = await startedTournament(browser, baseURL!);
   const first = await joinAs(browser, created, "Andi");
   await openMyMatch(first);
   const matchUrl = first.url();
 
   const second = await joinAs(browser, created, "Budi");
+  // Simulate a weak signal: this phone receives no live updates, so its score goes stale.
+  await second.route("**/stream", (route) => route.abort());
   await openReady(second, matchUrl);
 
   await tap(first, "A", 1);
   await expect(first.getByText("15 left")).toBeVisible();
-  await expect(first.getByText("Live")).toBeVisible();
+  // "15 left" shows optimistically; wait until the server has actually saved the tap.
+  await expect(first.getByText("Saving…")).toHaveCount(0);
 
   await tap(second, "B", 1); // second phone still thinks it is 0-0
   await expect(

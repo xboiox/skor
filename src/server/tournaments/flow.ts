@@ -2,6 +2,7 @@ import { and, desc, eq, ne } from "drizzle-orm";
 import { computeLeaderboard } from "@/domain/leaderboard";
 import { generateMexicanoRound, repeatAsSecondLeg, type PlannedRound } from "@/domain/scheduling";
 import { AppError } from "@/lib/api-response";
+import { notifyTournament } from "@/server/realtime/notify";
 import type { Database, Transaction } from "@/server/db/client";
 import {
   matches,
@@ -94,6 +95,7 @@ export async function nextMexicanoRound(
     if (!round.ok) throw new AppError("VALIDATION_ERROR", round.error.message);
 
     await saveRounds(tx, tournamentId, [round.value], number);
+    await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
     return { number };
   });
 }
@@ -165,6 +167,7 @@ export async function repeatAmericano(
       running ? null : secondLeg.value[0]!.number,
     );
     await tx.update(tournaments).set({ currentLeg: 2 }).where(eq(tournaments.id, tournamentId));
+    await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
     return { rounds: secondLeg.value.length };
   });
 }
@@ -176,5 +179,6 @@ export async function endTournament(db: Database, tournamentId: string): Promise
       .update(tournaments)
       .set({ status: "finished" })
       .where(eq(tournaments.id, tournamentId));
+    await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
   });
 }

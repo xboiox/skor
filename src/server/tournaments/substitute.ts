@@ -1,6 +1,7 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { planSubstitution, type ScheduledMatch, type SubstitutionPlan } from "@/domain/scheduling";
 import { AppError } from "@/lib/api-response";
+import { notifyTournament } from "@/server/realtime/notify";
 import type { Database, Transaction } from "@/server/db/client";
 import {
   matches,
@@ -190,6 +191,7 @@ export async function substitutePlayer(
       affectedMatchIds: plan.value.matchUpdates.map((u) => u.matchId),
       createdByUserId: options.actorUserId ?? null,
     });
+    await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
     return result;
   });
 }

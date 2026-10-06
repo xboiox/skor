@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { ScoringConfig } from "@/domain/scoring";
-import { displayedScore, enqueuePoint, isLocked, type QueueState } from "./score-queue";
+import {
+  displayedScore,
+  enqueuePoint,
+  isLocked,
+  receiveRemote,
+  type QueueState,
+} from "./score-queue";
 
 const RALLY_16: ScoringConfig = { type: "rally", totalPoints: 16 };
 const TENNIS: ScoringConfig = { type: "tennis", mode: "first_to", games: 4, deuce: "golden_point" };
@@ -75,5 +81,31 @@ describe("isLocked", () => {
 
   it("locks once pending taps complete the match", () => {
     expect(isLocked(RALLY_16, state({ scoreA: 15 }, ["B"]))).toBe(true);
+  });
+});
+
+describe("receiveRemote", () => {
+  const remote = {
+    scoreA: 4,
+    scoreB: 2,
+    gameA: 0,
+    gameB: 0,
+    status: "in_progress" as const,
+    version: 6,
+  };
+
+  it("applies a newer version from another phone", () => {
+    expect(receiveRemote(state({ version: 5 }), remote).server).toEqual(remote);
+  });
+
+  it("ignores stale or duplicate versions (e.g. our own update echoed back)", () => {
+    const current = state({ scoreA: 4, scoreB: 2, version: 6 });
+    expect(receiveRemote(current, remote)).toBe(current);
+    expect(receiveRemote(state({ version: 9 }), remote).server.version).toBe(9);
+  });
+
+  it("waits while our own taps are still being sent (the conflict path handles it)", () => {
+    const busy = state({ version: 5 }, ["A"]);
+    expect(receiveRemote(busy, remote)).toBe(busy);
   });
 });

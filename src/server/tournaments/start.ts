@@ -11,6 +11,7 @@ import type { Database } from "@/server/db/client";
 import { players, tournaments } from "@/server/db/schema";
 import { lockDraftTournament } from "./draft";
 import { saveRounds } from "./schedule-store";
+import { notifyTournament } from "@/server/realtime/notify";
 
 const FIRST_ROUND = 1;
 
@@ -42,6 +43,7 @@ export async function startTournament(db: Database, tournamentId: string): Promi
 
     await saveRounds(tx, tournamentId, planned.value, FIRST_ROUND);
     await tx.update(tournaments).set({ status: "active" }).where(eq(tournaments.id, tournamentId));
+    await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
   });
 }
 

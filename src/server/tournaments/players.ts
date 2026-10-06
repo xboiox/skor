@@ -1,5 +1,6 @@
 import { and, count, eq, max, sql } from "drizzle-orm";
 import { AppError } from "@/lib/api-response";
+import { notifyTournament } from "@/server/realtime/notify";
 import { MAX_PLAYERS, playerNameSchema } from "@/lib/validation/tournament";
 import type { Database, Executor } from "@/server/db/client";
 import { players } from "@/server/db/schema";
@@ -70,6 +71,7 @@ export async function addPlayer(
       .insert(players)
       .values({ tournamentId, name, position: await nextPosition(tx, tournamentId) })
       .returning({ id: players.id, name: players.name, position: players.position });
+    await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
     return player!;
   });
 }
@@ -86,5 +88,6 @@ export async function removePlayer(
       .where(and(eq(players.id, playerId), eq(players.tournamentId, tournamentId)))
       .returning({ id: players.id });
     if (removed.length === 0) throw new AppError("NOT_FOUND", "Player not found.");
+    await notifyTournament(tx, { tournamentId, type: "tournament.updated" });
   });
 }
