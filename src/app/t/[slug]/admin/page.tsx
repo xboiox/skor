@@ -118,7 +118,7 @@ export default async function AdminPage({ params }: PageProps<"/t/[slug]/admin">
           </>
         )}
       </main>
-      {t.status !== "draft" && <TournamentNav slug={slug} active="admin" isHost />}
+      {t.status !== "draft" && <TournamentNav slug={slug} active="admin" canPlay isHost />}
     </div>
   );
 }

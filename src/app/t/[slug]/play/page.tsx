@@ -73,7 +73,7 @@ export default async function PlayPage({ params }: PageProps<"/t/[slug]/play">) 
           <IdentityPicker slug={slug} players={activePlayers} />
         )}
       </main>
-      <TournamentNav slug={slug} active="play" isHost={isHost} />
+      <TournamentNav slug={slug} active="play" canPlay isHost={isHost} />
     </div>
   );
 }

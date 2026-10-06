@@ -75,3 +75,11 @@ export async function tap(page: Page, team: "A" | "B", times: number) {
   const panel = page.getByRole("button", { name: /^Point for/ }).nth(team === "A" ? 0 : 1);
   for (let i = 0; i < times; i += 1) await panel.click();
 }
+
+/** Taps the panel of the team that includes `name` (or the other team with `opponents: true`). */
+export async function tapTeamOf(page: Page, name: string, times: number, opponents = false) {
+  const panels = page.getByRole("button", { name: /^Point for/ });
+  const own = page.getByRole("button", { name: new RegExp(`^Point for .*${name}`) });
+  const target = opponents ? panels.filter({ hasNot: page.getByText(name) }) : own;
+  for (let i = 0; i < times; i += 1) await target.first().click();
+}

@@ -95,8 +95,13 @@
 
 ## Fase 9 — Leaderboard & halaman publik
 
-- [ ] `/t/[slug]`: leaderboard (final/provisional), daftar ronde & skor live
-- [ ] Penanda visual provisional & rank bersama
+- [x] `standingsOf` + `playerHistory` dari data board (tanpa query tambahan)
+- [x] `/t/[slug]` publik: tab Leaderboard / Rounds (di URL), mode Live (provisional) / Final only, realtime
+- [x] Tabel mobile: #, Player, P, Won/Avg, Diff; ≥ 640px + Lost/Avg; tap baris → detail & riwayat match
+- [x] Penanda provisional (⏱ live + keterangan), rank bersama `3=`, label Sub/Withdrawn, "You", catatan mode rata-rata
+- [x] Status draft ("Starting soon") & finished ("Final results"); kartu match tanpa link untuk penonton
+- [x] Tab bar: Leaderboard untuk semua, Matches untuk pemegang player link, Admin untuk host
+- [x] Realtime: resync juga saat koneksi pertama (menutup celah antara render server dan SSE)
 
 ## Fase 10 — Cleanup & hardening
 

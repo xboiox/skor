@@ -8,8 +8,8 @@ export type StreamStatus = "connecting" | "live" | "reconnecting" | "offline";
 const EVENT_TYPES = ["match.updated", "tournament.updated"] as const;
 
 /**
- * Follows a tournament over SSE. `onEvent` gets every change; `onResync` runs after a reconnect
- * (or when the tab comes back), when events may have been missed and a full refresh is needed.
+ * Follows a tournament over SSE. `onEvent` gets every change; `onResync` runs whenever events may
+ * have been missed — on (re)connect and when the tab comes back — so a full refresh is needed.
  */
 export function useTournamentStream(
   slug: string,
@@ -25,8 +25,10 @@ export function useTournamentStream(
     const source = new EventSource(`/api/t/${slug}/stream`);
     let hasConnected = false;
 
+    // Resync on every "ready", including the first: changes saved between the server render
+    // and this connection were never sent as events.
     source.addEventListener("ready", () => {
-      if (hasConnected) latest.current.onResync();
+      latest.current.onResync();
       hasConnected = true;
       setStatus("live");
     });

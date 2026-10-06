@@ -6,6 +6,8 @@ interface MatchCardProps {
   match: MatchView;
   names: ReadonlyMap<string, string>;
   meId: string | null;
+  /** Public viewers see the card without a link to the scoring screen. */
+  isLinked?: boolean;
 }
 
 export const MATCH_STATUS_LABEL = {
@@ -15,17 +17,15 @@ export const MATCH_STATUS_LABEL = {
   approved: "Final",
 } as const;
 
-export function MatchCard({ slug, match, names, meId }: MatchCardProps) {
+export function MatchCard({ slug, match, names, meId, isLinked = true }: MatchCardProps) {
   const isMine = meId !== null && [...match.teamA, ...match.teamB].includes(meId);
   const team = (ids: readonly [string, string]) =>
     ids.map((id) => names.get(id) ?? "?").join(" / ");
   const hasScore = match.status !== "scheduled";
 
-  return (
-    <Link
-      href={`/t/${slug}/match/${match.id}`}
-      className={`bg-surface flex flex-col gap-1 rounded-xl border p-4 ${isMine ? "border-primary border-2" : "border-border"}`}
-    >
+  const className = `bg-surface flex flex-col gap-1 rounded-xl border p-4 ${isMine ? "border-primary border-2" : "border-border"}`;
+  const content = (
+    <>
       <span className="text-muted flex items-center justify-between text-sm font-semibold">
         <span>
           Court {match.court}
@@ -47,6 +47,13 @@ export function MatchCard({ slug, match, names, meId }: MatchCardProps) {
         <span>{team(match.teamB)}</span>
         {hasScore && <span className="tabular text-xl font-extrabold">{match.scoreB}</span>}
       </span>
+    </>
+  );
+  return isLinked ? (
+    <Link href={`/t/${slug}/match/${match.id}`} className={className}>
+      {content}
     </Link>
+  ) : (
+    <div className={className}>{content}</div>
   );
 }

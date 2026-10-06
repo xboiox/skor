@@ -2,16 +2,19 @@ import Link from "next/link";
 
 interface TournamentNavProps {
   slug: string;
-  active: "play" | "admin";
+  active: "board" | "play" | "admin";
+  /** Holds the player link (or is the host). */
+  canPlay: boolean;
   isHost: boolean;
 }
 
 /** Bottom tab bar for tournament screens (docs/UI_GUIDELINES.md §4). */
-export function TournamentNav({ slug, active, isHost }: TournamentNavProps) {
+export function TournamentNav({ slug, active, canPlay, isHost }: TournamentNavProps) {
   const tabs = [
-    { key: "play", label: "Matches", href: `/t/${slug}/play` },
+    { key: "board", label: "Leaderboard", href: `/t/${slug}` },
+    ...(canPlay || isHost ? [{ key: "play", label: "Matches", href: `/t/${slug}/play` }] : []),
     ...(isHost ? [{ key: "admin", label: "Admin", href: `/t/${slug}/admin` }] : []),
-  ] as const;
+  ];
   if (tabs.length < 2) return null;
 
   return (

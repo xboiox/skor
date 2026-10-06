@@ -372,7 +372,7 @@ Payload divalidasi Zod saat diterima (`parseEvent`); payload rusak diabaikan dan
 
 ### 6.3 Klien
 
-- `useTournamentStream(slug)` → `EventSource`, status `connecting / live / reconnecting / offline`; saat tersambung ulang atau tab kembali aktif → **resync** (refresh penuh), karena event selama terputus tidak dikirim ulang.
+- `useTournamentStream(slug)` → `EventSource`, status `connecting / live / reconnecting / offline`. Setiap `ready` (termasuk koneksi **pertama**) dan saat tab kembali aktif → **resync** (refresh penuh): event selama terputus — atau di antara render server dan tersambungnya SSE — tidak pernah dikirim ulang.
 - `LiveUpdates` (halaman pemain & admin): `router.refresh()` dengan debounce 300 ms + indikator ● Live.
 - Layar scoring: `match.updated` untuk match ini langsung diterapkan **jika** versinya lebih baru dan tidak ada tap yang sedang dikirim (`receiveRemote`); resync mengambil `GET /api/matches/:id`. Saat offline, tombol skor dikunci dengan pesan jelas.
 
