@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatMatchType, formatScoring } from "./format";
+import { formatDate, formatFinalHint, formatMatchType, formatScoring } from "./format";
 
 describe("formatScoring", () => {
   it("describes rally scoring", () => {
@@ -46,5 +46,17 @@ describe("formatMatchType", () => {
 describe("formatDate", () => {
   it("formats an ISO date without timezone shifts", () => {
     expect(formatDate("2026-10-03")).toBe("Sat, 3 Oct 2026");
+  });
+});
+
+describe("formatFinalHint", () => {
+  it("explains the rule for each scoring type", () => {
+    expect(formatFinalHint({ type: "rally", totalPoints: 24 })).toBe("Scores must add up to 24.");
+    expect(
+      formatFinalHint({ type: "tennis", mode: "first_to", games: 6, deuce: "advantage" }),
+    ).toBe("One team must reach 6 games.");
+    expect(
+      formatFinalHint({ type: "tennis", mode: "total_of", games: 4, deuce: "golden_point" }),
+    ).toBe("Games must add up to 4.");
   });
 });

@@ -156,6 +156,8 @@ pending ──▶ active ──(semua match approved)──▶ completed
 
 Americano: ronde bisa dimainkan paralel/berurutan; status diturunkan dari status match-nya.
 
+Catatan (Fase 7): status ronde adalah informasi kemajuan. Match di ronde mana pun boleh diskor selama turnamen `active` dan match belum `approved`, sehingga lapangan yang selesai duluan tidak menunggu approval. Saat semua match sebuah ronde `approved`, ronde → `completed` dan ronde `pending` berikutnya → `active`. Mexicano _Next round_ tetap menunggu semua hasil ronde terakhir di-approve.
+
 ### 2.3 Match
 
 | Dari        | Aksi                             | Ke                      | Siapa        |

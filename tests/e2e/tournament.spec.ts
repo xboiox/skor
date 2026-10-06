@@ -50,8 +50,10 @@ test("a guest creates an Americano tournament, opens it and starts it", async ({
 
   await page.getByRole("button", { name: "Start tournament" }).click();
   await page.getByRole("button", { name: "Yes, start" }).click();
-  await expect(page.getByRole("heading", { name: "Tournament started" })).toBeVisible();
-  await expect(page.getByText("7 rounds scheduled for 8 players")).toBeVisible();
+  // After starting, the admin page switches to running mode: approvals, controls and all 7 rounds.
+  await expect(page.getByRole("heading", { name: "Needs approval (0)" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "End tournament" })).toBeVisible();
+  await expect(page.getByText(/^Round \d+ · /)).toHaveCount(7);
 });
 
 test("each step validates before moving on", async ({ page }) => {

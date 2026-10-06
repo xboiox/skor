@@ -8,12 +8,15 @@ interface LinkCardProps {
   description: string;
   url: string;
   shareText: string;
+  /** Server-rendered SVG; when given, a "Show QR" button lets players scan it at the venue. */
+  qrSvg?: string;
 }
 
 const COPIED_MS = 2000;
 
-export function LinkCard({ title, description, url, shareText }: LinkCardProps) {
+export function LinkCard({ title, description, url, shareText, qrSvg }: LinkCardProps) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [isQrOpen, setIsQrOpen] = useState(false);
   const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
 
   async function copy() {
@@ -56,7 +59,24 @@ export function LinkCard({ title, description, url, shareText }: LinkCardProps) 
             Share
           </button>
         )}
+        {qrSvg && (
+          <button
+            type="button"
+            onClick={() => setIsQrOpen(!isQrOpen)}
+            aria-expanded={isQrOpen}
+            className={buttonClass}
+          >
+            {isQrOpen ? "Hide QR" : "Show QR"}
+          </button>
+        )}
       </div>
+      {qrSvg && isQrOpen && (
+        // Generated server-side by the qrcode library from our own URL.
+        <div
+          className="mx-auto w-full max-w-64 rounded-xl bg-white p-2"
+          dangerouslySetInnerHTML={{ __html: qrSvg }}
+        />
+      )}
     </section>
   );
 }

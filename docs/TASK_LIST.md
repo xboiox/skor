@@ -71,15 +71,17 @@
 
 ## Fase 7 — Scoring flow & approval
 
-- [ ] API aksi skor (point/undo) dengan optimistic lock + audit `score_events`
-- [ ] API final result
-- [ ] API approve / reject / host edit
-- [ ] Komponen layout turnamen: header + bottom tab bar + bottom sheet
-- [ ] Halaman `/t/[slug]/play` (bottom sheet "I am …") & `/t/[slug]/match/[matchId]`
-- [ ] Layar scoring: tap panel +1, optimistic update, Wake Lock, haptic, landscape
-- [ ] Share link: Web Share API + QR code
-- [ ] Halaman `/t/[slug]/admin`: antrian approval, Next round, Repeat, End
-- [ ] API substitutions (preview + simpan) + wizard `/t/[slug]/admin/replace`
+- [x] Service skor: point/undo/final dengan `FOR UPDATE` + cek versi (409 berisi state terbaru) + audit `score_events`
+- [x] Service host: approve / reject / edit (edit = approved), perkembangan status ronde otomatis
+- [x] Aturan: match di ronde mana pun boleh diskor selama turnamen aktif & belum approved
+- [x] Next round (Mexicano, setelah semua approved), Repeat home/away (Americano, memakai pengganti permanen), End
+- [x] Replace player: service + preview (dry run) + wizard `/t/[slug]/admin/replace`
+- [x] API: `/api/matches/:id/{actions,approve,reject}`, `PATCH /api/matches/:id`, `/api/tournaments/:id/{rounds/next,repeat,end,substitutions[/preview]}`, `/api/t/:slug/identity`
+- [x] Halaman `/t/[slug]/play`: "I am …" (daftar besar + cari), match saya di atas, ronde & bye
+- [x] Layar scoring `/t/[slug]/match/[matchId]`: tap panel +1, antrian optimistic, sinkron saat konflik, Undo, sheet Final, Wake Lock, getar, landscape
+- [x] Halaman admin aktif: antrian approval, semua hasil + Edit, kontrol Next/Repeat/Replace/End
+- [x] Tab bar bawah (Matches · Admin)
+- [x] QR code (server-side SVG) untuk player & public link
 
 ## Fase 8 — Realtime
 

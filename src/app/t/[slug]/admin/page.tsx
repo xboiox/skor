@@ -2,15 +2,20 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DraftManager } from "@/components/admin/draft-manager";
+import { ResultsPanel } from "@/components/admin/results-panel";
+import { TournamentControls } from "@/components/admin/tournament-controls";
+import { TournamentNav } from "@/components/tournament/tournament-nav";
 import { AppHeader } from "@/components/app-header";
 import { LinkCard } from "@/components/share/link-card";
 import { AppError } from "@/lib/api-response";
-import { formatDate, formatMatchType, formatScoring } from "@/lib/format";
+import { formatDate, formatFinalHint, formatMatchType, formatScoring } from "@/lib/format";
 import { getPlayerToken } from "@/server/access/access-repository";
 import { requireHost } from "@/server/access/guards";
 import { getEnv } from "@/server/env";
 import { getAccessContext } from "@/server/http/request-context";
+import { qrSvg } from "@/server/share/qr";
 import { tournamentLinks } from "@/server/tournaments/links";
+import { getTournamentBoard } from "@/server/tournaments/board";
 import { getTournamentOverview } from "@/server/tournaments/queries";
 import { findLiveTournamentBySlug } from "@/server/tournaments/repository";
 
@@ -51,12 +56,21 @@ export default async function AdminPage({ params }: PageProps<"/t/[slug]/admin">
     throw err;
   }
 
-  const overview = (await getTournamentOverview(ctx.db, tournament.id))!;
+  const [overviewResult, board] = await Promise.all([
+    getTournamentOverview(ctx.db, tournament.id),
+    getTournamentBoard(ctx.db, tournament.id),
+  ]);
+  const overview = overviewResult!;
   const t = overview.tournament;
   const links = tournamentLinks(getEnv().APP_URL, slug, {
     admin: null,
     player: await getPlayerToken(ctx.db, tournament.id),
   });
+
+  const [playerQr, publicQr] = await Promise.all([
+    links.player ? qrSvg(links.player) : Promise.resolve(undefined),
+    qrSvg(links.public),
+  ]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -77,23 +91,33 @@ export default async function AdminPage({ params }: PageProps<"/t/[slug]/admin">
             description="Players open this to enter scores."
             url={links.player}
             shareText={`${t.name} — join to enter scores`}
+            qrSvg={playerQr}
           />
         )}
+
+        <LinkCard
+          title="Public link"
+          description="Anyone can follow live scores and the leaderboard."
+          url={links.public}
+          shareText={`${t.name} — live scores`}
+          qrSvg={publicQr}
+        />
 
         {t.status === "draft" ? (
           <DraftManager tournamentId={t.id} players={overview.players} />
         ) : (
-          <section className="border-border bg-surface rounded-xl border p-4">
-            <h2 className="font-bold">
-              {t.status === "active" ? "Tournament started" : "Tournament finished"}
-            </h2>
-            <p className="text-muted">
-              {overview.roundCount} {overview.roundCount === 1 ? "round" : "rounds"} scheduled for{" "}
-              {overview.players.length} players.
-            </p>
-          </section>
+          <>
+            {t.status === "finished" && (
+              <p className="border-border bg-surface rounded-xl border p-4 font-semibold">
+                This tournament has ended. Results are final.
+              </p>
+            )}
+            <TournamentControls board={board!} />
+            <ResultsPanel board={board!} finalHint={formatFinalHint(board!.scoring)} />
+          </>
         )}
       </main>
+      {t.status !== "draft" && <TournamentNav slug={slug} active="admin" isHost />}
     </div>
   );
 }

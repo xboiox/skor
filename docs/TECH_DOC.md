@@ -39,6 +39,8 @@ Perintah berguna:
 | `docker compose exec app npm test`                    | Test dari dalam container                                     |
 | `docker compose exec db psql -U skor skor`            | Masuk ke database                                             |
 
+Setelah menambah dependency (`npm install <pkg>`), container perlu `node_modules` baru: `docker compose up -d --build --renew-anon-volumes app`.
+
 Browser Playwright perlu dipasang sekali: `npx playwright install chromium webkit`.
 
 ## 2. Environment variables

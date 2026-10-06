@@ -53,6 +53,13 @@ export async function requireHost(ctx: AccessContext, t: GuardTournament): Promi
   throw denied(ctx, await hasValidCookie(ctx, t, "player"), "Only the host can do this.");
 }
 
+/** Holder of the player link (or the host) — enough to see matches and choose "I am …". */
+export async function requirePlayerLink(ctx: AccessContext, t: GuardTournament): Promise<void> {
+  if (await findHost(ctx, t)) return;
+  if (await hasValidCookie(ctx, t, "player")) return;
+  throw denied(ctx, false, "Open the player link to enter scores.");
+}
+
 /** Host, or a player link holder who has chosen an active player in this tournament. */
 export async function requireScorer(
   ctx: AccessContext,

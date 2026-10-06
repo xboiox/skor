@@ -7,6 +7,7 @@ import {
 } from "@/server/access/access-repository";
 import {
   requireHost,
+  requirePlayerLink,
   requireScorer,
   requireViewer,
   type AccessContext,
@@ -226,6 +227,14 @@ describe("guards", () => {
   it("requireScorer refuses anonymous visitors", async () => {
     const { t } = await setup();
     expect(await errorCode(requireScorer(context(), t))).toBe("UNAUTHENTICATED");
+  });
+
+  it("requirePlayerLink accepts the player link without an identity, and the host", async () => {
+    const { owner, t, tokens } = await setup();
+    const link = context({ [accessCookieName("player", t.slug)]: tokens.player });
+    await expect(requirePlayerLink(link, t)).resolves.toBeUndefined();
+    await expect(requirePlayerLink(context({}, owner.id), t)).resolves.toBeUndefined();
+    expect(await errorCode(requirePlayerLink(context(), t))).toBe("UNAUTHENTICATED");
   });
 
   it("requireViewer finds a live tournament by slug", async () => {

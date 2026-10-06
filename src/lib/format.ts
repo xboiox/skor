@@ -1,3 +1,5 @@
+import type { ScoringConfig } from "@/domain/scoring";
+
 type ScoringColumns = {
   scoringType: "rally" | "tennis";
   rallyPoints: number | null;
@@ -31,4 +33,12 @@ const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", {
 /** Tournament dates are calendar dates; format in UTC so they never shift a day. */
 export function formatDate(isoDate: string): string {
   return DATE_FORMAT.format(new Date(`${isoDate}T00:00:00Z`));
+}
+
+/** Rule shown when entering a final result by hand. */
+export function formatFinalHint(config: ScoringConfig): string {
+  if (config.type === "rally") return `Scores must add up to ${config.totalPoints}.`;
+  return config.mode === "first_to"
+    ? `One team must reach ${config.games} games.`
+    : `Games must add up to ${config.games}.`;
 }
