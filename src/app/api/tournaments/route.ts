@@ -4,6 +4,7 @@ import { getCurrentSession } from "@/server/auth/session";
 import { getDb } from "@/server/db/client";
 import { getEnv } from "@/server/env";
 import { readJson } from "@/server/http/request-context";
+import { enforceRateLimit, RATE_LIMITS, requestIp } from "@/server/http/rate-limits";
 import { withErrorHandling } from "@/server/http/route-handler";
 import { assertSameOriginJson } from "@/server/http/same-origin";
 import { createTournament } from "@/server/tournaments/create";
@@ -15,6 +16,11 @@ export const dynamic = "force-dynamic";
 export const POST = withErrorHandling(async (request: Request) => {
   const env = getEnv();
   assertSameOriginJson(request, env.APP_URL);
+  const ip = requestIp(request);
+  enforceRateLimit(
+    `create:${ip ?? "unknown"}`,
+    ip ? RATE_LIMITS.createTournament : RATE_LIMITS.createTournamentUnknownIp,
+  );
   const input = createTournamentSchema.parse(await readJson(request));
   const session = await getCurrentSession();
 

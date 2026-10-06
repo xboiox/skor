@@ -46,7 +46,11 @@ export function fail(error: AppError): Response {
       ? { code: error.code, message: error.message }
       : { code: error.code, message: error.message, details: error.details };
   const body: ApiResponse<never> = { success: false, data: null, error: apiError };
-  return Response.json(body, { status: error.status });
+  const retryAfter = (error.details as { retryAfterSeconds?: number } | undefined)
+    ?.retryAfterSeconds;
+  const headers =
+    error.code === "RATE_LIMITED" && retryAfter ? { "retry-after": String(retryAfter) } : undefined;
+  return Response.json(body, { status: error.status, headers });
 }
 
 export function toAppError(err: unknown): AppError {

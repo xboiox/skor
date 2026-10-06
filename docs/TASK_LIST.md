@@ -106,12 +106,14 @@
 ## Fase 10 — Cleanup & hardening
 
 - [x] Container `cleanup` (hapus guest expired tiap jam) + test — selesai di Fase 1
-- [ ] Rate limit aksi skor
-- [ ] Rate limit di balik reverse proxy: set `advanced.ipAddress.trustedProxies` (header `x-forwarded-for` bisa dipalsukan bila app diakses langsung)
-- [ ] Security review (token, cookie, input, error leak)
-- [ ] E2E suite ([TECH_DOC §7](TECH_DOC.md)) hijau
-- [ ] Coverage total ≥ 80%
-- [ ] Lighthouse mobile ≥ 90 (Performance & Accessibility) + uji manual Safari iOS & Chrome Android
+- [x] Rate limit API: skor, aksi host, buat turnamen, identitas (`429` + `Retry-After`)
+- [x] IP klien hanya dari proxy tepercaya (`TRUST_PROXY`, `CLIENT_IP_HEADER`, `TRUSTED_PROXIES`), sama untuk Better Auth
+- [x] Security header (`nosniff`, `X-Frame-Options`, CSP framing/form/object, Referrer/Permissions-Policy, HSTS prod, tanpa `X-Powered-By`)
+- [x] Security review semua route (origin, guard, Zod) + `npm audit` → [SECURITY.md](SECURITY.md)
+- [x] E2E suite hijau (iPhone 13, Pixel 7, desktop)
+- [x] Coverage total ≥ 80%
+- [x] Lighthouse mobile (build production): `/` 97/100/100, `/tournaments/new` 95/100/100, `/login` 99/100/100, `/t/:slug` 100/100/100 (Performance/Accessibility/Best practices)
+- [ ] Uji manual di Safari iOS & Chrome Android (perangkat sungguhan — dilakukan oleh tim)
 
 ## Backlog (setelah MVP)
 
@@ -119,7 +121,9 @@
 - [ ] PWA
 - [ ] Klaim turnamen guest ke akun
 - [ ] Scoreboard mode TV
-- [ ] Konfigurasi production (Docker prod, reverse proxy, HTTPS, backup DB)
+- [ ] Konfigurasi production (Docker prod, reverse proxy, HTTPS, backup DB) — checklist di [SECURITY.md](SECURITY.md#5-checklist-sebelum-production)
+- [ ] CSP dengan nonce untuk script
+- [ ] Rate limit & batas koneksi SSE di store bersama (multi-instance)
 - [ ] Statistik pemain lintas turnamen
 
 ## Keputusan terbuka

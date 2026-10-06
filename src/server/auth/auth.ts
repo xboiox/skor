@@ -31,7 +31,15 @@ function createAuth() {
     session: { expiresIn: SESSION_DAYS * DAY_SECONDS },
     // Sign-in/up keep Better Auth's stricter built-in rule (3 requests / 10 s per IP).
     rateLimit: { enabled: true, window: RATE_LIMIT_WINDOW_SECONDS, max: RATE_LIMIT_MAX },
-    advanced: { database: { generateId: "uuid" } },
+    advanced: {
+      database: { generateId: "uuid" },
+      // Same client-IP rules as our own API (docs/SECURITY.md): the header written by the proxy,
+      // walking X-Forwarded-For past the trusted proxy hops.
+      ipAddress: {
+        ipAddressHeaders: [env.CLIENT_IP_HEADER],
+        ...(env.TRUSTED_PROXIES.length > 0 ? { trustedProxies: env.TRUSTED_PROXIES } : {}),
+      },
+    },
     plugins: [nextCookies()],
   });
 }

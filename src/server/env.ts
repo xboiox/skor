@@ -19,6 +19,25 @@ const envSchema = z
     AUTH_SECRET: z.string().min(MIN_SECRET_LENGTH),
     AUTH_GOOGLE_ID: z.string().optional(),
     AUTH_GOOGLE_SECRET: z.string().optional(),
+    /** Set to true only behind a reverse proxy that writes CLIENT_IP_HEADER (see docs/SECURITY.md). */
+    TRUST_PROXY: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((v) => v === "true"),
+    CLIENT_IP_HEADER: z
+      .string()
+      .min(1)
+      .default("x-forwarded-for")
+      .transform((v) => v.toLowerCase()),
+    TRUSTED_PROXIES: z
+      .string()
+      .default("")
+      .transform((v) =>
+        v
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
   })
   // Google sign-in is optional, but its credentials only work as a pair.
   .superRefine((env, ctx) => {

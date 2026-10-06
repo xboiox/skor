@@ -14,6 +14,7 @@ import { eq } from "drizzle-orm";
 import { matches } from "@/server/db/schema";
 import type { Actor } from "@/server/matches/match-store";
 import { findLiveTournamentById, type TournamentRef } from "@/server/tournaments/repository";
+import { enforceRateLimit, RATE_LIMITS } from "./rate-limits";
 
 const uuidSchema = z.uuid();
 
@@ -45,6 +46,7 @@ export async function loadHostTournament(
   const tournament = await findLiveTournamentById(ctx.db, parseId(rawId));
   if (!tournament) throw new AppError("NOT_FOUND", "Tournament not found.");
   const host = await requireHost(ctx, tournament);
+  enforceRateLimit(`host:${tournament.id}`, RATE_LIMITS.host);
   return { ctx, tournament, host };
 }
 
@@ -67,5 +69,11 @@ export async function loadMatchAccess(rawMatchId: string, level: "scorer" | "hos
   if (!tournament) throw new AppError("NOT_FOUND", "Match not found.");
   const access =
     level === "host" ? await requireHost(ctx, tournament) : await requireScorer(ctx, tournament);
-  return { ctx, matchId, actor: actorOf(access) };
+  const actor = actorOf(access);
+  const who = actor.role === "player" ? actor.playerId : `host:${actor.userId ?? "link"}`;
+  enforceRateLimit(
+    level === "host" ? `host:${tournament.id}` : `score:${tournament.id}:${who}`,
+    level === "host" ? RATE_LIMITS.host : RATE_LIMITS.score,
+  );
+  return { ctx, matchId, actor };
 }

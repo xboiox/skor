@@ -6,6 +6,7 @@ import { chooseIdentity } from "@/server/access/identity";
 import { identityCookieName } from "@/server/access/tokens";
 import { getEnv } from "@/server/env";
 import { getAccessContext, readJson } from "@/server/http/request-context";
+import { enforceRateLimit, RATE_LIMITS, requestIp } from "@/server/http/rate-limits";
 import { withErrorHandling } from "@/server/http/route-handler";
 import { assertSameOrigin, assertSameOriginJson } from "@/server/http/same-origin";
 
@@ -18,6 +19,10 @@ export const POST = withErrorHandling(
     const { playerId } = identitySchema.parse(await readJson(request));
     const ctx = await getAccessContext();
     const tournament = await requireViewer(ctx.db, (await params).slug);
+    enforceRateLimit(
+      `identity:${tournament.id}:${requestIp(request) ?? "unknown"}`,
+      RATE_LIMITS.identity,
+    );
     const { player, cookie } = await chooseIdentity(
       ctx,
       tournament,

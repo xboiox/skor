@@ -37,6 +37,12 @@ describe("fail", () => {
     });
   });
 
+  it("sets Retry-After on rate-limited responses", () => {
+    const res = fail(new AppError("RATE_LIMITED", "Slow down", { retryAfterSeconds: 30 }));
+    expect(res.status).toBe(429);
+    expect(res.headers.get("retry-after")).toBe("30");
+  });
+
   it("omits details when none are given", async () => {
     const body = await fail(new AppError("NOT_FOUND", "Tournament not found")).json();
     expect(body.error).toEqual({ code: "NOT_FOUND", message: "Tournament not found" });

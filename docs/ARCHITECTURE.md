@@ -97,16 +97,16 @@ Port: app `3000`, db `5432`.
 
 ## 6. Keamanan
 
-| Aspek              | Penanganan                                                                                                                                                 |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Password           | Hash **scrypt** (bawaan Better Auth, rekomendasi OWASP), 8–128 karakter                                                                                    |
-| Token admin/player | 32 byte random (base64url). Disimpan **hash SHA-256** di DB, bukan plaintext                                                                               |
-| Token di URL       | Saat link pertama dibuka, token ditukar ke **cookie httpOnly** (per turnamen) lalu redirect ke URL bersih, supaya token tidak bocor lewat history/referrer |
-| Otorisasi          | Setiap route handler memanggil guard: `requireHost`, `requirePlayer`, `requireViewer`                                                                      |
-| Input              | Semua body/params divalidasi Zod; error dikembalikan dalam envelope standar                                                                                |
-| Rate limit         | In-memory per IP untuk login/register & aksi skor (MVP, single instance)                                                                                   |
-| Secret             | Semua via env (`AUTH_SECRET`, Google OAuth), tidak pernah di-commit                                                                                        |
-| Audit              | Tabel `score_events` mencatat setiap aksi skor beserta aktornya                                                                                            |
+| Aspek              | Penanganan                                                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Password           | Hash **scrypt** (bawaan Better Auth, rekomendasi OWASP), 8–128 karakter                                                                                       |
+| Token admin/player | 32 byte random (base64url). Disimpan **hash SHA-256** di DB, bukan plaintext                                                                                  |
+| Token di URL       | Saat link pertama dibuka, token ditukar ke **cookie httpOnly** (per turnamen) lalu redirect ke URL bersih, supaya token tidak bocor lewat history/referrer    |
+| Otorisasi          | Setiap route handler memanggil guard: `requireHost`, `requirePlayer`, `requireViewer`                                                                         |
+| Input              | Semua body/params divalidasi Zod; error dikembalikan dalam envelope standar                                                                                   |
+| Rate limit         | Better Auth (login/register) + limiter in-memory untuk API (skor, host, buat turnamen, identitas); IP hanya dari proxy tepercaya — [SECURITY.md](SECURITY.md) |
+| Secret             | Semua via env (`AUTH_SECRET`, Google OAuth), tidak pernah di-commit                                                                                           |
+| Audit              | Tabel `score_events` mencatat setiap aksi skor beserta aktornya                                                                                               |
 
 ## 7. Keputusan arsitektur (ADR singkat)
 

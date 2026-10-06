@@ -45,16 +45,19 @@ Browser Playwright perlu dipasang sekali: `npx playwright install chromium webki
 
 ## 2. Environment variables
 
-| Nama                                                  | Contoh                                          | Keterangan                                                     |
-| ----------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------- |
-| `DATABASE_URL`                                        | `postgres://skor:skor@localhost:5432/skor`      | Koneksi Postgres (di container `app` di-override ke host `db`) |
-| `TEST_DATABASE_URL`                                   | `postgres://skor:skor@localhost:5432/skor_test` | DB untuk integration test                                      |
-| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `skor`                                          | Kredensial container Postgres                                  |
-| `APP_URL`                                             | `http://localhost:3000`                         | Base URL app (untuk link turnamen)                             |
-| `GUEST_TTL_DAYS`                                      | `7`                                             | Masa berlaku turnamen guest (1–90)                             |
-| `AUTH_SECRET`                                         | hasil `openssl rand -base64 32`                 | Secret Better Auth (wajib, min. 32 karakter)                   |
-| `AUTH_GOOGLE_ID`                                      | …                                               | OAuth Client ID                                                |
-| `AUTH_GOOGLE_SECRET`                                  | …                                               | OAuth Client Secret                                            |
+| Nama                                                  | Contoh                                          | Keterangan                                                                                                                   |
+| ----------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                        | `postgres://skor:skor@localhost:5432/skor`      | Koneksi Postgres (di container `app` di-override ke host `db`)                                                               |
+| `TEST_DATABASE_URL`                                   | `postgres://skor:skor@localhost:5432/skor_test` | DB untuk integration test                                                                                                    |
+| `POSTGRES_USER` / `POSTGRES_PASSWORD` / `POSTGRES_DB` | `skor`                                          | Kredensial container Postgres                                                                                                |
+| `APP_URL`                                             | `http://localhost:3000`                         | Base URL app (untuk link turnamen)                                                                                           |
+| `GUEST_TTL_DAYS`                                      | `7`                                             | Masa berlaku turnamen guest (1–90)                                                                                           |
+| `TRUST_PROXY`                                         | `false` (dev: `true`)                           | Percayai header IP dari reverse proxy — lihat [SECURITY.md §2](SECURITY.md#2-ip-klien--reverse-proxy-wajib-untuk-production) |
+| `CLIENT_IP_HEADER`                                    | `x-forwarded-for`                               | Header IP yang ditulis proxy                                                                                                 |
+| `TRUSTED_PROXIES`                                     | —                                               | IP/CIDR proxy yang dilewati saat membaca `X-Forwarded-For`                                                                   |
+| `AUTH_SECRET`                                         | hasil `openssl rand -base64 32`                 | Secret Better Auth (wajib, min. 32 karakter)                                                                                 |
+| `AUTH_GOOGLE_ID`                                      | …                                               | OAuth Client ID                                                                                                              |
+| `AUTH_GOOGLE_SECRET`                                  | …                                               | OAuth Client Secret                                                                                                          |
 
 App memvalidasi env saat start (Zod) dan gagal cepat bila ada yang kurang.
 

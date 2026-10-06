@@ -16,6 +16,20 @@ const AVG_DIGITS = 1;
 
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 
+/** Screen readers get the numbers with their meaning, not a bare list of digits. */
+function rowLabel(row: LeaderboardRow, usesAverage: boolean, isMe: boolean): string {
+  const parts = [
+    `Rank ${row.rank}${row.isSharedRank ? " (shared)" : ""}`,
+    `${row.name}${isMe ? " (you)" : ""}`,
+    row.label ? LABEL_TEXT[row.label] : null,
+    `played ${row.played}`,
+    usesAverage ? `average ${row.avgWon.toFixed(AVG_DIGITS)}` : `won ${row.pointsWon}`,
+    `difference ${signed(row.diff)}`,
+    row.isProvisional ? "includes results not yet approved" : null,
+  ];
+  return parts.filter(Boolean).join(", ");
+}
+
 /**
  * Narrow screens show #, Player, P, Won, Diff; wider screens add Lost and Avg.
  * Tapping a row reveals the details and the player's matches (docs/UI_GUIDELINES.md §5.4).
@@ -28,27 +42,20 @@ export function LeaderboardTable({ rows, usesAverage, histories, meId }: Leaderb
 
   return (
     <div className="flex flex-col gap-2">
+      {/* Visual column headings; each row button carries a full spoken label instead. */}
       <div
-        role="row"
+        aria-hidden="true"
         className={`${grid} text-muted px-3 text-xs font-bold tracking-wide uppercase`}
       >
-        <span role="columnheader">#</span>
-        <span role="columnheader">Player</span>
-        <span role="columnheader" className="text-right" title="Played">
+        <span>#</span>
+        <span>Player</span>
+        <span className="text-right" title="Played">
           P
         </span>
-        <span role="columnheader" className="text-right">
-          {usesAverage ? "Avg" : "Won"}
-        </span>
-        <span role="columnheader" className="text-right">
-          Diff
-        </span>
-        <span role="columnheader" className={wide}>
-          {usesAverage ? "Won" : "Avg"}
-        </span>
-        <span role="columnheader" className={wide}>
-          Lost
-        </span>
+        <span className="text-right">{usesAverage ? "Avg" : "Won"}</span>
+        <span className="text-right">Diff</span>
+        <span className={wide}>{usesAverage ? "Won" : "Avg"}</span>
+        <span className={wide}>Lost</span>
       </div>
 
       <ol className="flex flex-col gap-1.5">
@@ -67,6 +74,7 @@ export function LeaderboardTable({ rows, usesAverage, histories, meId }: Leaderb
               <button
                 type="button"
                 aria-expanded={isOpen}
+                aria-label={rowLabel(row, usesAverage, isMe)}
                 onClick={() => setOpenId(isOpen ? null : row.playerId)}
                 className={`${grid} tabular min-h-14 w-full px-3 py-2 text-left`}
               >

@@ -54,6 +54,35 @@ describe("parseEnv", () => {
   });
 });
 
+describe("proxy settings", () => {
+  it("does not trust forwarding headers by default", () => {
+    const env = parseEnv(VALID);
+    expect(env.TRUST_PROXY).toBe(false);
+    expect(env.CLIENT_IP_HEADER).toBe("x-forwarded-for");
+    expect(env.TRUSTED_PROXIES).toEqual([]);
+  });
+
+  it("parses TRUST_PROXY and a comma-separated proxy list", () => {
+    const env = parseEnv({
+      ...VALID,
+      TRUST_PROXY: "true",
+      TRUSTED_PROXIES: " 10.0.0.1, 172.16.0.0/12 ",
+    });
+    expect(env.TRUST_PROXY).toBe(true);
+    expect(env.TRUSTED_PROXIES).toEqual(["10.0.0.1", "172.16.0.0/12"]);
+  });
+
+  it("rejects a TRUST_PROXY value other than true/false", () => {
+    expect(() => parseEnv({ ...VALID, TRUST_PROXY: "yes" })).toThrow(/TRUST_PROXY/);
+  });
+
+  it("lower-cases the client IP header", () => {
+    expect(parseEnv({ ...VALID, CLIENT_IP_HEADER: "CF-Connecting-IP" }).CLIENT_IP_HEADER).toBe(
+      "cf-connecting-ip",
+    );
+  });
+});
+
 describe("isGoogleAuthEnabled", () => {
   it("is true only when both Google credentials are set", () => {
     expect(isGoogleAuthEnabled(parseEnv(VALID))).toBe(false);
