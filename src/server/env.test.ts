@@ -83,6 +83,23 @@ describe("proxy settings", () => {
   });
 });
 
+describe("deployment settings", () => {
+  it("accepts an optional direct (unpooled) database URL", () => {
+    expect(parseEnv(VALID).DATABASE_URL_UNPOOLED).toBeUndefined();
+    const env = parseEnv({
+      ...VALID,
+      DATABASE_URL_UNPOOLED: "postgres://u:p@direct.example:5432/db",
+    });
+    expect(env.DATABASE_URL_UNPOOLED).toBe("postgres://u:p@direct.example:5432/db");
+  });
+
+  it("requires a CRON_SECRET of at least 16 characters when set", () => {
+    expect(parseEnv(VALID).CRON_SECRET).toBeUndefined();
+    expect(() => parseEnv({ ...VALID, CRON_SECRET: "short" })).toThrow(/CRON_SECRET/);
+    expect(parseEnv({ ...VALID, CRON_SECRET: "c".repeat(16) }).CRON_SECRET).toHaveLength(16);
+  });
+});
+
 describe("isGoogleAuthEnabled", () => {
   it("is true only when both Google credentials are set", () => {
     expect(isGoogleAuthEnabled(parseEnv(VALID))).toBe(false);

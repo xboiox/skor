@@ -9,6 +9,10 @@ const envSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/ }),
+    /** Direct connection for LISTEN/NOTIFY and migrations when DATABASE_URL goes through a pooler (Neon). */
+    DATABASE_URL_UNPOOLED: z.url({ protocol: /^postgres(ql)?$/ }).optional(),
+    /** Vercel Cron sends it as "Authorization: Bearer <CRON_SECRET>" (docs/DEPLOYMENT.md). */
+    CRON_SECRET: z.string().min(16).optional(),
     APP_URL: z.url().default("http://localhost:3000"),
     GUEST_TTL_DAYS: z.coerce
       .number()

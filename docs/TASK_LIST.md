@@ -121,7 +121,7 @@
 - [ ] PWA
 - [ ] Klaim turnamen guest ke akun
 - [ ] Scoreboard mode TV
-- [ ] Konfigurasi production (Docker prod, reverse proxy, HTTPS, backup DB) — checklist di [SECURITY.md](SECURITY.md#5-checklist-sebelum-production)
+- [x] Konfigurasi production: `Dockerfile` + `docker-compose.prod.yml` + Caddy (HTTPS), dan Vercel (`vercel.json` cron, unpooled LISTEN) — [DEPLOYMENT.md](DEPLOYMENT.md)
 - [ ] CSP dengan nonce untuk script
 - [ ] Rate limit & batas koneksi SSE di store bersama (multi-instance)
 - [ ] Statistik pemain lintas turnamen

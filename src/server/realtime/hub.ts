@@ -1,5 +1,5 @@
 import type postgres from "postgres";
-import { getSql } from "@/server/db/client";
+import { getListenSql } from "@/server/db/client";
 import { logger } from "@/server/logger";
 import { CHANNEL, parseEvent, type TournamentEvent } from "./events";
 
@@ -69,6 +69,6 @@ export class RealtimeHub {
 const globalForHub = globalThis as unknown as { skorHub?: RealtimeHub };
 
 export function getHub(): RealtimeHub {
-  globalForHub.skorHub ??= new RealtimeHub(getSql);
+  globalForHub.skorHub ??= new RealtimeHub(getListenSql);
   return globalForHub.skorHub;
 }

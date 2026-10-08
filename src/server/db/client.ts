@@ -12,7 +12,10 @@ export type Executor = Database | Transaction;
 
 // Only the connection pool survives hot reloads. The Drizzle instance is per module so it is
 // rebuilt when schema.ts changes (a stale instance keeps an outdated column-name cache).
-const globalForDb = globalThis as unknown as { skorSql?: postgres.Sql };
+const globalForDb = globalThis as unknown as {
+  skorSql?: postgres.Sql;
+  skorListenSql?: postgres.Sql;
+};
 let db: Database | undefined;
 
 export function getSql(): postgres.Sql {
@@ -23,4 +26,15 @@ export function getSql(): postgres.Sql {
 export function getDb(): Database {
   db ??= drizzle({ client: getSql(), schema, casing: "snake_case" });
   return db;
+}
+
+/**
+ * Connection used for LISTEN. Poolers in transaction mode (e.g. Neon pooled URLs) cannot LISTEN,
+ * so DATABASE_URL_UNPOOLED is used when set; otherwise the regular pool.
+ */
+export function getListenSql(): postgres.Sql {
+  const direct = getEnv().DATABASE_URL_UNPOOLED;
+  if (!direct) return getSql();
+  globalForDb.skorListenSql ??= postgres(direct, { max: 1 });
+  return globalForDb.skorListenSql;
 }

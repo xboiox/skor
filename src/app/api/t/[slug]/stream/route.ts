@@ -5,6 +5,9 @@ import { formatSse } from "@/server/realtime/events";
 import { getHub } from "@/server/realtime/hub";
 
 export const dynamic = "force-dynamic";
+// Serverless hosts (Vercel) end the stream after this; EventSource reconnects and resyncs.
+// 300 s is the Vercel Hobby maximum. Ignored by `next start` on a VPS.
+export const maxDuration = 300;
 
 const HEARTBEAT_MS = 25_000;
 const RETRY_MS = 3_000;
