@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 interface AppHeaderProps {
+  /** Right side: account link, live status, or "← Back". */
   right?: ReactNode;
 }
 

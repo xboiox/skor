@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { randomIp } from "./helpers";
 
 test("pages and APIs send baseline security headers", async ({ request }) => {
   for (const path of ["/", "/api/health", "/login"]) {
@@ -38,7 +39,12 @@ test("creating tournaments from one address is rate limited", async ({ request, 
 
 test("API errors never leak internals", async ({ request, baseURL }) => {
   const res = await request.post("/api/tournaments", {
-    headers: { origin: baseURL!, "content-type": "application/json" },
+    // Own client IP so earlier runs filling the shared "unknown IP" bucket cannot turn this into a 429.
+    headers: {
+      origin: baseURL!,
+      "content-type": "application/json",
+      "x-forwarded-for": randomIp(),
+    },
     data: "{broken",
   });
   expect(res.status()).toBe(400);

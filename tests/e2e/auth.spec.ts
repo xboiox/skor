@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { randomIp } from "./helpers";
 
 const PASSWORD = "correct horse battery";
 
@@ -110,7 +111,7 @@ test("a valid tournament link redirects to the app URL, not an internal host", a
   baseURL,
 }) => {
   const created = await request.post("/api/tournaments", {
-    headers: { origin: baseURL! },
+    headers: { origin: baseURL!, "x-forwarded-for": randomIp() },
     data: {
       name: "Link check",
       date: "2026-10-03",

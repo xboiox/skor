@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
+import { getCurrentSession } from "@/server/auth/session";
 
 const ACCOUNT_BENEFITS = [
   "Tournaments are saved — guest tournaments are deleted after 7 days",
@@ -16,16 +17,19 @@ const FEATURES = [
   { title: "Live leaderboard", body: "Points won, diff and head-to-head — always up to date." },
 ] as const;
 
-export default function Home() {
+/** Reads the session so a signed-in user sees "My tournaments", not "Log in" and sign-up prompts. */
+export default async function Home() {
+  const isSignedIn = Boolean(await getCurrentSession());
+
   return (
     <div className="flex flex-1 flex-col">
       <AppHeader
         right={
           <Link
-            href="/login"
+            href={isSignedIn ? "/dashboard" : "/login"}
             className="text-primary flex min-h-12 items-center rounded-lg px-3 font-semibold"
           >
-            Log in
+            {isSignedIn ? "My tournaments" : "Log in"}
           </Link>
         }
       />
@@ -50,37 +54,41 @@ export default function Home() {
           ))}
         </ul>
 
-        <section
-          aria-labelledby="account-benefits"
-          className="border-primary bg-surface flex flex-col gap-3 rounded-xl border-2 p-4"
-        >
-          <h2 id="account-benefits" className="text-lg font-extrabold">
-            Free account, more control
-          </h2>
-          <ul className="flex flex-col gap-2">
-            {ACCOUNT_BENEFITS.map((benefit) => (
-              <li key={benefit} className="flex gap-2">
-                <span aria-hidden="true" className="text-success font-bold">
-                  ✓
-                </span>
-                <span>{benefit}</span>
-              </li>
-            ))}
-          </ul>
-          <Link
-            href="/register"
-            className="border-border flex min-h-12 items-center justify-center rounded-xl border font-bold"
+        {!isSignedIn && (
+          <section
+            aria-labelledby="account-benefits"
+            className="border-primary bg-surface flex flex-col gap-3 rounded-xl border-2 p-4"
           >
-            Create free account
-          </Link>
-        </section>
+            <h2 id="account-benefits" className="text-lg font-extrabold">
+              Free account, more control
+            </h2>
+            <ul className="flex flex-col gap-2">
+              {ACCOUNT_BENEFITS.map((benefit) => (
+                <li key={benefit} className="flex gap-2">
+                  <span aria-hidden="true" className="text-success font-bold">
+                    ✓
+                  </span>
+                  <span>{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <Link
+              href="/register"
+              className="border-border flex min-h-12 items-center justify-center rounded-xl border font-bold"
+            >
+              Create free account
+            </Link>
+          </section>
+        )}
       </main>
 
       <footer className="pb-safe border-border bg-surface sticky bottom-0 border-t px-4 pt-3">
         <div className="mx-auto flex max-w-2xl flex-col gap-2">
-          <p className="text-muted text-center text-sm">
-            Or just create a tournament as a guest — no account needed.
-          </p>
+          {!isSignedIn && (
+            <p className="text-muted text-center text-sm">
+              Or just create a tournament as a guest — no account needed.
+            </p>
+          )}
           <Link
             href="/tournaments/new"
             className="bg-primary text-primary-foreground flex min-h-14 w-full items-center justify-center rounded-xl text-lg font-bold"

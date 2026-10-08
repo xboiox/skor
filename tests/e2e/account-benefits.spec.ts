@@ -63,7 +63,8 @@ test("a guest can sign up from the review step without losing the form", async (
   await page.getByRole("button", { name: "Create account" }).click();
 
   // Back on the form, at the review step, with everything still filled in.
-  await expect(page).toHaveURL(/\/tournaments\/new$/);
+  // The restored draft also restores its step in the URL.
+  await expect(page).toHaveURL(/\/tournaments\/new(\?step=3)?$/);
   await expect(page.getByText("Step 4 of 4")).toBeVisible();
   await expect(page.getByText("Saved Americano")).toBeVisible();
   await expect(page.getByText("4: Andi, Budi, Citra, Dewi")).toBeVisible();
@@ -93,4 +94,27 @@ test("guests are reminded after creating that an account removes the admin-link 
   await page.getByRole("button", { name: "Create tournament" }).click();
   await expect(page.getByText("Save your admin link now")).toBeVisible();
   await expect(page.getByRole("link", { name: "log in first" })).toHaveAttribute("href", "/login");
+});
+
+test("signed in, the home page shows My tournaments instead of sign-up prompts", async ({
+  page,
+}) => {
+  await openReady(page, "/register");
+  await page.getByLabel("Name").fill("Host");
+  await page.getByLabel("Email").fill(`home-${randomUUID()}@example.com`);
+  await page.getByLabel("Password").fill("correct horse battery");
+  await page.getByRole("button", { name: "Create account" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+
+  // Tapping the logo from the dashboard must not look like being logged out.
+  await page.getByRole("banner").getByRole("link", { name: "Skor." }).click();
+  await expect(page).toHaveURL(/\/$/);
+  const header = page.getByRole("banner");
+  await expect(header.getByRole("link", { name: "My tournaments" })).toBeVisible();
+  await expect(header.getByRole("link", { name: "Log in" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "Free account, more control" })).toHaveCount(0);
+  await expect(page.getByText("Or just create a tournament as a guest")).toHaveCount(0);
+
+  await header.getByRole("link", { name: "My tournaments" }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
 });

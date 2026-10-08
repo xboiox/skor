@@ -43,6 +43,12 @@
   `Matches` · `Leaderboard` · `Rounds` · (`Admin` jika host)
 - Header ringkas: nama turnamen + indikator koneksi realtime (● Live / ○ Reconnecting).
 - Tombol back browser harus selalu bekerja dengan wajar (tiap tab = URL sendiri).
+- **Tombol "← Back"** di **kanan atas** header (gaya tautan primary tebal, area tap 48px — sama dengan "← Matches" di layar scoring) pada **login dan register**. Tujuan:
+  1. halaman Skor sebelumnya — bila ada di tab ini (pelacak `sessionStorage` `skor:nav`, karena `document.referrer` tidak berubah pada navigasi di dalam Next.js);
+  2. bila halaman dibuka langsung (mis. dari WhatsApp): tujuan `?next=`;
+  3. selain itu Home.
+
+  Sebelum hydration, tombol tetap berupa tautan ke tujuan cadangan, jadi tidak pernah "mati".
 
 ## 5. Wireframe layar utama
 
@@ -128,7 +134,9 @@ Bottom sheet daftar nama (bukan `<select>` kecil): list besar + kolom pencarian 
 - Form **satu kolom**, dibagi langkah: `Details → Format & scoring → Players → Review`.
 - Pilihan (match type, scoring type, 16/21/24/32, 4/6) memakai **segmented button / chip besar**, bukan dropdown.
 - Input pemain: ketik nama + Enter → chip; tombol **Paste list** (satu nama per baris) untuk input cepat.
-- Tombol **Next / Create** sticky di bawah.
+- Tombol **Next / Create** sticky di bawah; **Back** di sebelahnya mundur satu langkah, dan pada langkah 1 keluar dari form.
+- **Langkah ada di URL** (`?step=1…3`): tombol back/gesture bawaan HP mundur satu langkah, sama dengan tombol Back. _Next_ dinonaktifkan sampai URL berpindah (ketukan ganda tidak melompati/menggandakan langkah).
+- Form create **tidak** memakai ← Back di header (agar tidak ada dua tombol Back): Back di sebelah _Next_ sudah mundur per langkah, dan pada langkah 1 keluar dari form (ke halaman sebelumnya, atau dashboard/home).
 - **Isian tidak hilang**: draft disimpan di `sessionStorage` (tab yang sama) dan dipulihkan setelah reload atau setelah kembali dari login — dibaca setelah hydration agar HTML server & klien sama; dihapus setelah turnamen dibuat.
 - **Review (guest)**: kotak "You are not signed in: this tournament and its links are deleted after 7 days" + tautan **Log in to keep it →** (`/login?next=/tournaments/new`).
 - **Tournament created (guest)**: peringatan "Save your admin link now" + tip "Next time, **log in first** and you won't need this link".
@@ -174,7 +182,7 @@ Bottom sheet daftar nama (bukan `<select>` kecil): list besar + kolom pencarian 
 ```
 
 - Tombol utama tetap **Create tournament**; akun ditawarkan, bukan dipaksakan.
-- Halaman **statis** (tanpa session) agar tetap cepat — bagian akun tampil untuk semua orang.
+- Halaman membaca **session** (dirender per request): user yang login melihat **My tournaments** di kanan atas, dan bagian "Free account" serta kalimat opsi guest **disembunyikan** — menekan logo dari dashboard tidak lagi terlihat seperti logout.
 - Footer sticky memakai latar **solid** (bukan transparan) agar teks di belakangnya tidak tembus.
 
 ## 6. Kondisi jaringan
