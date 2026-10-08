@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { INPUT_CLASS } from "@/components/ui/styles";
+import { useCanShare } from "@/hooks/use-can-share";
 
 interface LinkCardProps {
   title: string;
@@ -17,7 +18,7 @@ const COPIED_MS = 2000;
 export function LinkCard({ title, description, url, shareText, qrSvg }: LinkCardProps) {
   const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
   const [isQrOpen, setIsQrOpen] = useState(false);
-  const canShare = typeof navigator !== "undefined" && typeof navigator.share === "function";
+  const canShare = useCanShare();
 
   async function copy() {
     try {
