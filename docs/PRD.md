@@ -29,6 +29,11 @@ Referensi produk: aplikasi sejenis seperti Padel Up.
 - Register/login dengan **email + password** dan **Google account**.
 - **Guest mode**: membuat turnamen tanpa login. Akses via link bertoken. Data **dihapus otomatis 7 hari** setelah dibuat.
 - User login: turnamen tersimpan permanen dan tampil di dashboard.
+- **Ajakan membuat akun** (iterasi pasca-MVP, 2026-10-08). Mode guest tetap tersedia, tetapi tidak ditonjolkan di bagian atas:
+  - Landing: bagian **"Free account, more control"** — turnamen tersimpan (guest dihapus setelah 7 hari), kelola dari HP mana pun tanpa admin link, semua turnamen di dashboard. Opsi guest hanya sebagai kalimat kecil di atas tombol _Create tournament_.
+  - Langkah _Review_ (guest): peringatan "deleted after 7 days" + tautan **Log in to keep it**; isian form tetap utuh setelah login/daftar (termasuk Google).
+  - Layar _Tournament created_ (guest): tip "Next time, log in first and you won't need this link."
+  - Prinsip: hanya manfaat yang **sudah ada** yang dipromosikan; fitur yang belum dibuat (statistik pemain, memindahkan turnamen guest ke akun) tidak dijanjikan dan tidak diberi label "Coming soon".
 
 ### 4.2 Create Tournament
 

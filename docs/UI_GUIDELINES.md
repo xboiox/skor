@@ -129,16 +129,53 @@ Bottom sheet daftar nama (bukan `<select>` kecil): list besar + kolom pencarian 
 - Pilihan (match type, scoring type, 16/21/24/32, 4/6) memakai **segmented button / chip besar**, bukan dropdown.
 - Input pemain: ketik nama + Enter → chip; tombol **Paste list** (satu nama per baris) untuk input cepat.
 - Tombol **Next / Create** sticky di bawah.
+- **Isian tidak hilang**: draft disimpan di `sessionStorage` (tab yang sama) dan dipulihkan setelah reload atau setelah kembali dari login — dibaca setelah hydration agar HTML server & klien sama; dihapus setelah turnamen dibuat.
+- **Review (guest)**: kotak "You are not signed in: this tournament and its links are deleted after 7 days" + tautan **Log in to keep it →** (`/login?next=/tournaments/new`).
+- **Tournament created (guest)**: peringatan "Save your admin link now" + tip "Next time, **log in first** and you won't need this link".
 
 ### 5.6 Admin
 
 - Kartu **Needs approval** paling atas dengan tombol `Approve` / `Edit` besar per match.
-- Kontrol turnamen (Next round, Repeat, Replace player, End) di bottom sheet "Manage", dengan konfirmasi untuk aksi yang tidak bisa dibatalkan (End).
+- Kontrol turnamen (Next round, Repeat, Replace player, End) di bagian **Manage** pada halaman admin, dengan konfirmasi di dalam halaman untuk aksi yang tidak bisa dibatalkan (Repeat, End).
 
 ### 5.7 Share links
 
 - Tombol **Share** memakai **Web Share API** (langsung ke WhatsApp dll.), fallback ke _Copy link_.
 - **QR code** untuk Player link & Public link — pemain cukup scan di venue.
+
+### 5.8 Landing
+
+```
+┌─────────────────────────┐
+│ Skor.            Log in │
+├─────────────────────────┤
+│ [Americano · Mexicano]  │
+│ Padel tournaments,      │
+│ scored live.            │
+│ Create a tournament in  │  ← tanpa "No account needed"
+│ under two minutes.      │
+│ ┌ Auto schedule ──────┐ │
+│ │ …byes included. Swap│ │
+│ │ in a substitute…    │ │
+│ └─────────────────────┘ │
+│ ┌ Live scores ────────┐ │
+│ ┌ Live leaderboard ───┐ │
+│ ┏ Free account, more ┓ │  ← bingkai primary
+│ ┃ ✓ Tournaments saved ┃ │
+│ ┃ ✓ Any phone         ┃ │
+│ ┃ ✓ One dashboard     ┃ │
+│ ┃ [Create free account]┃ │  ← tombol sekunder
+│ ┗━━━━━━━━━━━━━━━━━━━━━┛ │
+├─────────────────────────┤
+│ Or just create a tourna-│  ← footer sticky, latar solid
+│ ment as a guest — …     │
+│ [  Create tournament  ] │  ← tombol utama
+└─────────────────────────┘
+```
+
+- Tombol utama tetap **Create tournament**; akun ditawarkan, bukan dipaksakan.
+- Halaman **statis** (tanpa session) agar tetap cepat — bagian akun tampil untuk semua orang.
+- Footer sticky memakai latar **solid** (bukan transparan) agar teks di belakangnya tidak tembus.
 
 ## 6. Kondisi jaringan
 

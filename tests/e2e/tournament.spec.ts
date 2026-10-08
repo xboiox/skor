@@ -35,7 +35,7 @@ async function fillWizard(page: Page, name: string, players: string[] = PLAYERS)
 
 test("a guest creates an Americano tournament, opens it and starts it", async ({ page }) => {
   await fillWizard(page, "Friday Americano");
-  await expect(page.getByText("kept for 7 days")).toBeVisible();
+  await expect(page.getByText("deleted after 7 days")).toBeVisible();
   await page.getByRole("button", { name: "Create tournament" }).click();
 
   await expect(page.getByText("✓ Tournament created")).toBeVisible();

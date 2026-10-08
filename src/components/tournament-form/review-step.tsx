@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { formatDate, formatMatchType, formatScoring } from "@/lib/format";
 import type { FormState } from "./form-state";
 
@@ -47,11 +48,24 @@ export function ReviewStep({ state, errors, isSignedIn }: ReviewStepProps) {
           ))}
         </ul>
       )}
-      <p className="text-muted text-sm">
-        {isSignedIn
-          ? "This tournament is saved to your account."
-          : "You are not signed in: the tournament and its links are kept for 7 days."}
-      </p>
+      {isSignedIn ? (
+        <p className="text-muted text-sm">This tournament is saved to your account.</p>
+      ) : (
+        <div className="border-border bg-surface flex flex-col gap-2 rounded-xl border p-4">
+          <p className="font-semibold">
+            You are not signed in: this tournament and its links are deleted after 7 days.
+          </p>
+          <p className="text-muted text-sm">
+            Log in first to keep it and manage it from any phone. Your answers stay here.
+          </p>
+          <Link
+            href={`/login?next=${encodeURIComponent("/tournaments/new")}`}
+            className="text-primary flex min-h-12 items-center font-bold"
+          >
+            Log in to keep it →
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

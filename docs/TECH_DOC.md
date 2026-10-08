@@ -175,18 +175,17 @@ Tennis:
 
 ## 6. UI routes
 
-| Route                             | Akses        | Isi                                                                                                                                    |
-| --------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `/`                               | publik       | Landing + CTA "Create tournament"                                                                                                      |
-| `/login?next=`, `/register?next=` | publik       | Email/password + "Continue with Google"                                                                                                |
-| `/dashboard`                      | user         | Daftar turnamen milik user                                                                                                             |
-| `/tournaments/new`                | publik       | Form create (field dinamis sesuai scoring type)                                                                                        |
-| `/tournaments/new/created`        | pembuat      | Menampilkan admin/player/public link (guest: peringatan simpan admin link)                                                             |
-| `/t/[slug]`                       | viewer       | Leaderboard, ronde & skor live                                                                                                         |
-| `/t/[slug]/play`                  | player       | Dropdown "I am …", daftar match, tombol input skor                                                                                     |
-| `/t/[slug]/match/[matchId]`       | player, host | Layar scoring: tombol besar +1 Team A / Team B, Undo, mode Final result                                                                |
-| `/t/[slug]/admin`                 | host         | Antrian approval, kontrol Next round / Repeat / End, edit skor, tombol **Replace player**                                              |
-| `/t/[slug]/admin/replace`         | host         | Wizard: pilih pemain → Temporary/Permanent → ronde → New player / Bye player (bye hanya muncul untuk Temporary) → preview → konfirmasi |
+| Route                             | Akses        | Isi                                                                                                                                                                                                                              |
+| --------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/`                               | publik       | Landing (statis): fitur, bagian "Free account, more control", CTA "Create tournament" + opsi guest di footer                                                                                                                     |
+| `/login?next=`, `/register?next=` | publik       | Email/password + "Continue with Google"                                                                                                                                                                                          |
+| `/dashboard`                      | user         | Daftar turnamen milik user                                                                                                                                                                                                       |
+| `/tournaments/new`                | publik       | Form create 4 langkah; draft di `sessionStorage` (`skor:create-draft`, divalidasi Zod); guest: ajakan _Log in to keep it_; setelah submit menampilkan layar _Tournament created_ (link admin/player/public) di halaman yang sama |
+| `/t/[slug]`                       | viewer       | Leaderboard, ronde & skor live                                                                                                                                                                                                   |
+| `/t/[slug]/play`                  | player       | Dropdown "I am …", daftar match, tombol input skor                                                                                                                                                                               |
+| `/t/[slug]/match/[matchId]`       | player, host | Layar scoring: tombol besar +1 Team A / Team B, Undo, mode Final result                                                                                                                                                          |
+| `/t/[slug]/admin`                 | host         | Antrian approval, kontrol Next round / Repeat / End, edit skor, tombol **Replace player**                                                                                                                                        |
+| `/t/[slug]/admin/replace`         | host         | Wizard: pilih pemain → Temporary/Permanent → ronde → New player / Bye player (bye hanya muncul untuk Temporary) → preview → konfirmasi                                                                                           |
 
 Prinsip UI: mobile-first — lihat [UI_GUIDELINES.md](UI_GUIDELINES.md) untuk spesifikasi, wireframe, dan budget performa.
 
@@ -248,4 +247,5 @@ Target coverage keseluruhan **≥ 80%**. Engine dikerjakan secara **TDD** (test 
 4. Host approve → leaderboard final berubah.
 5. Mexicano: Next round terkunci sampai semua match approved.
 6. Login Google (di-mock) → turnamen muncul di dashboard.
-7. Host melakukan permanent replace dengan pemain baru → pemain baru muncul di dropdown "I am …" dan jadwal sisa ronde terupdate realtime.
+7. Guest mengisi form → _Log in to keep it_ → daftar → kembali ke Review dengan isian utuh → turnamen tersimpan di akun (`account-benefits.spec.ts`).
+8. Host melakukan permanent replace dengan pemain baru → pemain baru muncul di dropdown "I am …" dan jadwal sisa ronde terupdate realtime.

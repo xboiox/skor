@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LinkCard } from "@/components/share/link-card";
 import { PRIMARY_BUTTON_CLASS } from "@/components/ui/styles";
 
@@ -28,6 +29,13 @@ export function CreatedScreen({ name, created }: CreatedScreenProps) {
         >
           Save your admin link now. Without an account it is the only way to manage this tournament,
           and it will not be shown again.
+          <span className="text-muted mt-1 block text-sm font-normal">
+            Next time,{" "}
+            <Link href="/login" className="text-primary font-bold">
+              log in first
+            </Link>{" "}
+            and you won&apos;t need this link — your tournaments stay in your dashboard.
+          </span>
         </p>
       )}
 

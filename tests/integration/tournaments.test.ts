@@ -11,7 +11,8 @@ import { startTournament } from "@/server/tournaments/start";
 import { connectTestDb, truncateAll } from "./test-db";
 
 const { sql, db } = connectTestDb();
-const NOW = new Date("2026-10-01T10:00:00Z");
+// Relative to the real clock: a fixed date turns guest tournaments into expired ones as time passes.
+const NOW = new Date();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const names = (n: number) => Array.from({ length: n }, (_, i) => `Player ${i + 1}`);

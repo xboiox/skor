@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { FieldError } from "@/components/ui/field-error";
 import { INPUT_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@/components/ui/styles";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { apiRequest } from "@/lib/api-client";
 import { CreatedScreen, type CreatedTournament } from "./created-screen";
+import {
+  browserStorage,
+  clearDraft,
+  parseDraft,
+  readDraftSnapshot,
+  saveDraft,
+} from "./draft-storage";
 import { FormatStep } from "./format-step";
 import { initialFormState, stepErrors, STEPS, toCreateInput, type FormState } from "./form-state";
 import { PlayersStep } from "./players-step";
@@ -17,6 +24,7 @@ interface WizardProps {
 }
 
 const LAST_STEP = STEPS.length - 1;
+const noSubscription = () => () => {};
 
 export function CreateTournamentWizard({ today, isSignedIn }: WizardProps) {
   const [state, setState] = useState<FormState>(() => initialFormState(today));
@@ -26,6 +34,23 @@ export function CreateTournamentWizard({ today, isSignedIn }: WizardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [created, setCreated] = useState<CreatedTournament | null>(null);
   const isHydrated = useHydrated();
+  // Restore the form after a detour to log in ("Log in to keep it"). The stored draft is read as an
+  // external store: null during SSR/hydration (HTML matches), then applied once in render.
+  const draftSnapshot = useSyncExternalStore(noSubscription, readDraftSnapshot, () => null);
+  const [isDraftLoaded, setIsDraftLoaded] = useState(false);
+  if (isHydrated && !isDraftLoaded) {
+    const draft = parseDraft(draftSnapshot);
+    if (draft) {
+      setState(draft.state);
+      setStep(draft.step);
+    }
+    setIsDraftLoaded(true);
+  }
+
+  useEffect(() => {
+    const storage = browserStorage();
+    if (isDraftLoaded && !created && storage) saveDraft(storage, state, step);
+  }, [isDraftLoaded, created, state, step]);
 
   const errors = shownStep === step ? stepErrors(state, step) : {};
   const update = (patch: Partial<FormState>) => setState((current) => ({ ...current, ...patch }));
@@ -48,8 +73,11 @@ export function CreateTournamentWizard({ today, isSignedIn }: WizardProps) {
       body: toCreateInput(state),
     });
     setIsSubmitting(false);
-    if (result.success) setCreated(result.data);
-    else setSubmitError(result.error.message);
+    if (result.success) {
+      const storage = browserStorage();
+      if (storage) clearDraft(storage);
+      setCreated(result.data);
+    } else setSubmitError(result.error.message);
   }
 
   if (created) return <CreatedScreen name={state.name.trim()} created={created} />;

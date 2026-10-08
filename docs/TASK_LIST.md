@@ -115,6 +115,16 @@
 - [x] Lighthouse mobile (build production): `/` 97/100/100, `/tournaments/new` 95/100/100, `/login` 99/100/100, `/t/:slug` 100/100/100 (Performance/Accessibility/Best practices)
 - [ ] Uji manual di Safari iOS & Chrome Android (perangkat sungguhan — dilakukan oleh tim)
 
+## Iterasi pasca-MVP
+
+- [x] Perbaikan hydration tombol Share (Web Share API) + test hydration semua halaman utama
+- [x] Deployment production: VPS (Docker Compose + Caddy) dan Vercel (cron, unpooled LISTEN) — [DEPLOYMENT.md](DEPLOYMENT.md)
+- [x] Template env Vercel (`.env.vercel.example`) + langkah import
+- [x] Ajakan membuat akun: bagian manfaat di landing, _Log in to keep it_ di Review, tip di layar created ([PRD §4.1](PRD.md#41-akun))
+- [x] Draft form create bertahan saat login/reload (`sessionStorage`, divalidasi)
+- [x] Copy landing: subjudul tanpa "No account needed", Auto schedule menyebut pengganti pemain, opsi guest di footer di atas _Create tournament_
+- [x] Test integration memakai jam relatif (tanggal tetap membuat turnamen guest "kedaluwarsa" seiring waktu)
+
 ## Backlog (setelah MVP)
 
 - [ ] Team Americano, Team Mexicano, Mix Americano
