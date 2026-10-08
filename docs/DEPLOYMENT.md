@@ -201,7 +201,19 @@ Sudah disiapkan di repo: `vercel.json` (cron harian pembersih guest), route `/ap
 
 ### B.4 Environment variables
 
-Settings → Environment Variables (minimal untuk **Production**):
+> **Jangan upload `.env` dari laptop.** File itu berisi nilai development: `DATABASE_URL` mengarah ke `localhost` (tidak terjangkau dari Vercel), `APP_URL` ke `http://localhost:3000` (link salah & semua aksi ditolak CSRF), dan `AUTH_SECRET` development. Production butuh nilai sendiri.
+
+**Cara tercepat — template `.env.vercel.example`:**
+
+1. Salin template ke file lokal yang tidak di-commit:
+   ```bash
+   cp .env.vercel.example .env.vercel     # .env.vercel diabaikan git
+   ```
+2. Isi semua nilai (perintah pembuat secret ada di komentar file). Bila Neon sudah di-_connect_ lewat **Storage**, `DATABASE_URL` dan `DATABASE_URL_UNPOOLED` biasanya sudah ada di Vercel — cukup periksa nilainya, tidak perlu ditimpa.
+3. Vercel → Project → **Settings → Environment Variables** → **Import .env** (atau tempel isinya), pilih environment **Production** → Save.
+4. Variabel baru berlaku untuk deployment berikutnya → lakukan **Redeploy** (B.6).
+
+Daftar lengkap (minimal untuk **Production**):
 
 | Variabel                               | Nilai                                                          | Keterangan                                                                 |
 | -------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------- |
