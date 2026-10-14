@@ -43,6 +43,8 @@ Setelah menambah dependency (`npm install <pkg>`), container perlu `node_modules
 
 Browser Playwright perlu dipasang sekali: `npx playwright install chromium webkit`.
 
+E2E terhadap build production lebih cepat dan stabil daripada dev server, sekaligus menjalankan test skeleton: `npx next build`, lalu `APP_URL=http://localhost:3100 npx next start -p 3100`, lalu `E2E_BASE_URL=http://localhost:3100 E2E_PRODUCTION=1 npm run test:e2e`.
+
 ## 2. Environment variables
 
 | Nama                                                  | Contoh                                          | Keterangan                                                                                                                   |
@@ -250,3 +252,6 @@ Target coverage keseluruhan **≥ 80%**. Engine dikerjakan secara **TDD** (test 
 7. Guest mengisi form → _Log in to keep it_ → daftar → kembali ke Review dengan isian utuh → turnamen tersimpan di akun (`account-benefits.spec.ts`).
 8. Tombol ← Back: login/register (halaman sebelumnya, atau `?next=`/Home bila dibuka langsung), form create (hanya Back di sebelah Next: langkah 1 keluar, langkah lain mundur; back HP mundur per langkah) (`navigation.spec.ts`). Home saat login menampilkan "My tournaments" (`account-benefits.spec.ts`).
 9. Host melakukan permanent replace dengan pemain baru → pemain baru muncul di dropdown "I am …" dan jadwal sisa ronde terupdate realtime.
+10. Skeleton loading muncul saat pindah halaman dan tanggal di form ditulis lengkap (`loading.spec.ts`). Test skeleton hanya jalan dengan `E2E_PRODUCTION=1` terhadap build production, karena dev server mem-prefetch secara malas.
+
+Catatan menulis test: dengan `loading.tsx`, URL berganti sebelum konten halaman tujuan tampil. Setelah klik link atau `waitForURL`, tunggu elemen halaman tujuan (heading/tombol) sebelum `goto` berikutnya, agar navigasi tidak saling memotong.

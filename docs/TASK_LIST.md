@@ -124,6 +124,9 @@
 - [x] Draft form create bertahan saat login/reload (`sessionStorage`, divalidasi)
 - [x] Copy landing: subjudul tanpa "No account needed", Auto schedule menyebut pengganti pemain, opsi guest di footer di atas _Create tournament_
 - [x] Tombol ← Back di kanan atas login & register (riwayat dalam-app, fallback `?next=`/Home); form create hanya memakai Back di sebelah Next; langkah form di URL agar back HP mundur per langkah; _Next_ aman dari ketukan ganda
+- [x] Vercel & Neon di region Singapura (`vercel.json` `regions: ["sin1"]`) — latensi turun ±2× dari Indonesia
+- [x] Skeleton loading (`loading.tsx`) di semua halaman yang memuat data
+- [x] Tanggal ditulis lengkap di bawah date picker ("Saturday, 3 October 2026")
 - [x] Home membaca session: user login melihat "My tournaments", tanpa ajakan daftar (logo tidak lagi terlihat "logout")
 - [x] Test integration memakai jam relatif (tanggal tetap membuat turnamen guest "kedaluwarsa" seiring waktu)
 

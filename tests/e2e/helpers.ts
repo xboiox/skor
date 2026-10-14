@@ -68,6 +68,8 @@ export async function openMyMatch(page: Page) {
     .getByRole("link")
     .click();
   await page.waitForURL(/\/match\//);
+  // The URL moves first (skeleton from loading.tsx); wait for the real scoring screen.
+  await expect(page.getByRole("button", { name: /^Point for/ }).first()).toBeVisible();
   await page.waitForLoadState("networkidle");
 }
 

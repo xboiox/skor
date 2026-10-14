@@ -131,6 +131,7 @@ Bottom sheet daftar nama (bukan `<select>` kecil): list besar + kolom pencarian 
 
 ### 5.5 Create tournament
 
+- **Tanggal**: date picker bawaan perangkat (format tampilannya mengikuti bahasa perangkat — mm/dd di laptop English-US, dd/mm di HP berbahasa Indonesia) + tanggal ditulis lengkap di bawahnya, mis. "Saturday, 3 October 2026", agar tidak ada salah tafsir.
 - Form **satu kolom**, dibagi langkah: `Details → Format & scoring → Players → Review`.
 - Pilihan (match type, scoring type, 16/21/24/32, 4/6) memakai **segmented button / chip besar**, bukan dropdown.
 - Input pemain: ketik nama + Enter → chip; tombol **Paste list** (satu nama per baris) untuk input cepat.
@@ -189,7 +190,7 @@ Bottom sheet daftar nama (bukan `<select>` kecil): list besar + kolom pencarian 
 
 - Tap skor menampilkan **optimistic update** dengan indikator "saving"; jika gagal → kembali ke nilai server + pesan jelas.
 - Banner tipis saat offline/reconnecting; tombol skor dinonaktifkan saat offline agar tidak terjadi skor ganda.
-- Skeleton loading, bukan spinner layar penuh.
+- **Skeleton loading** (`loading.tsx`, komponen `PageSkeleton`: varian list / form / scoring), bukan spinner layar penuh. Muncul seketika saat berpindah halaman karena di-prefetch, meniru tata letak halaman tujuan agar konten tidak melompat, `role="status"` + teks "Loading…" untuk pembaca layar, animasi berhenti bila _reduce motion_.
 
 ## 7. Performa (budget)
 

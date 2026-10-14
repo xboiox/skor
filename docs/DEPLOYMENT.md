@@ -227,6 +227,16 @@ Daftar lengkap (minimal untuk **Production**):
 | `GUEST_TTL_DAYS`                       | `7`                                                            |                                                                            |
 | `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` | opsional                                                       | Redirect URI: `https://<domain>/api/auth/callback/google`                  |
 
+### B.4b Region (penting untuk pengguna di Indonesia)
+
+Default Vercel menjalankan fungsi di **Washington DC (`iad1`)**. Untuk pengguna di Indonesia setiap request lalu menyeberang ke AS, dan bila database di Asia, **setiap query** juga — halaman turnamen (5–8 query) bisa 1–2 detik.
+
+- `vercel.json` di repo sudah mengatur `"regions": ["sin1"]` (Singapura).
+- Buat database Neon di region **AWS Singapore (ap-southeast-1)** — fungsi dan database harus satu region.
+- Cek: header respons `x-vercel-id` harus berbunyi `sin1::sin1::…` (edge Singapura, fungsi Singapura).
+
+Hasil terukur (skor.generasi.digital, dari Indonesia, setelah hangat): `/api/health` 0,57 → 0,23 dtk, `get-session` 0,34 → 0,19 dtk. Request pertama setelah lama tidak dipakai tetap lebih lambat (cold start fungsi + Neon gratis tertidur setelah ±5 menit).
+
 ### B.5 Jalankan migrasi
 
 Migrasi **tidak** jalan otomatis di Vercel. Jalankan dari laptop (butuh Node.js 24 dan repo ini) sebelum deploy pertama dan setiap ada migrasi baru:

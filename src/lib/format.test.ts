@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatDate, formatFinalHint, formatMatchType, formatScoring } from "./format";
+import {
+  formatDate,
+  formatFinalHint,
+  formatLongDate,
+  formatMatchType,
+  formatScoring,
+} from "./format";
 
 describe("formatScoring", () => {
   it("describes rally scoring", () => {
@@ -58,5 +64,18 @@ describe("formatFinalHint", () => {
     expect(
       formatFinalHint({ type: "tennis", mode: "total_of", games: 4, deuce: "golden_point" }),
     ).toBe("Games must add up to 4.");
+  });
+});
+
+describe("formatLongDate", () => {
+  it("spells out the weekday and month (no dd/mm vs mm/dd confusion)", () => {
+    expect(formatLongDate("2026-10-03")).toBe("Saturday, 3 October 2026");
+    expect(formatLongDate("2026-01-12")).toBe("Monday, 12 January 2026");
+  });
+
+  it("returns null for anything that is not a real date", () => {
+    expect(formatLongDate("")).toBeNull();
+    expect(formatLongDate("2026-02-30")).toBeNull();
+    expect(formatLongDate("03-10-2026")).toBeNull();
   });
 });

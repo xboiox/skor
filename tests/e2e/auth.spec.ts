@@ -132,8 +132,10 @@ test("a valid tournament link redirects to the app URL, not an internal host", a
 test("the password never ends up in the URL, even if submitted before the page is interactive", async ({
   browser,
 }) => {
-  // Block JavaScript to simulate a tap before hydration on a slow phone.
-  const context = await browser.newContext({ javaScriptEnabled: false });
+  // Simulate a slow phone that never hydrates: block the app's JS bundles. Inline streaming
+  // scripts still run, so the form appears (as before hydration) but React never takes over.
+  const context = await browser.newContext({ ...test.info().project.use });
+  await context.route("**/_next/static/**/*.js", (route) => route.abort());
   const page = await context.newPage();
   await page.goto("/login");
   await page.getByLabel("Email").fill("someone@example.com");

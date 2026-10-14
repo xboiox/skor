@@ -7,6 +7,7 @@ import { FieldError } from "@/components/ui/field-error";
 import { INPUT_CLASS, PRIMARY_BUTTON_CLASS, SECONDARY_BUTTON_CLASS } from "@/components/ui/styles";
 import { useHydrated } from "@/hooks/use-hydrated";
 import { apiRequest } from "@/lib/api-client";
+import { formatLongDate } from "@/lib/format";
 import { CreatedScreen, type CreatedTournament } from "./created-screen";
 import {
   browserStorage,
@@ -132,8 +133,17 @@ export function CreateTournamentWizard({ today, isSignedIn }: WizardProps) {
                   type="date"
                   value={state.date}
                   onChange={(e) => update({ date: e.currentTarget.value })}
+                  aria-describedby="date-readable"
                   className={INPUT_CLASS}
                 />
+                {/* The picker's own format follows the device language; spell the date out. */}
+                <span
+                  id="date-readable"
+                  aria-live="polite"
+                  className="text-muted text-sm font-semibold"
+                >
+                  {formatLongDate(state.date) ?? "Pick a date"}
+                </span>
                 <FieldError message={errors.date} />
               </label>
             </div>

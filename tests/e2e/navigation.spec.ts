@@ -10,7 +10,12 @@ async function openReady(page: Page, url: string) {
   await page.waitForLoadState("networkidle");
 }
 
+/** Waits for the real page, not just the URL: with loading.tsx the URL moves before the content. */
 async function settle(page: Page) {
+  const path = new URL(page.url()).pathname;
+  const heading =
+    path === "/login" ? "Log in" : path === "/register" ? "Create your account" : null;
+  if (heading) await expect(page.getByRole("heading", { level: 1, name: heading })).toBeVisible();
   await page.waitForLoadState("networkidle");
 }
 

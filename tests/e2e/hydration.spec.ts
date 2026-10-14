@@ -61,6 +61,8 @@ test("player, scoring, public and auth pages hydrate cleanly", async ({ browser,
     .getByRole("link")
     .click();
   await page.waitForURL(/\/match\//);
+  // The URL moves while loading.tsx still shows the skeleton; wait for the real scoring screen.
+  await expect(page.getByRole("button", { name: /^Point for/ }).first()).toBeVisible();
   await page.waitForLoadState("networkidle");
 
   for (const path of [

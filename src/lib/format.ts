@@ -42,3 +42,22 @@ export function formatFinalHint(config: ScoringConfig): string {
     ? `One team must reach ${config.games} games.`
     : `Games must add up to ${config.games}.`;
 }
+
+const LONG_DATE_FORMAT = new Intl.DateTimeFormat("en-GB", {
+  weekday: "long",
+  day: "numeric",
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/**
+ * "Saturday, 3 October 2026" — shown under the native date picker, whose own format follows the
+ * device language (mm/dd on US-English laptops), so the chosen date is never ambiguous.
+ */
+export function formatLongDate(isoDate: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoDate)) return null;
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  if (Number.isNaN(date.getTime()) || !date.toISOString().startsWith(isoDate)) return null;
+  return LONG_DATE_FORMAT.format(date);
+}
